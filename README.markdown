@@ -1,9 +1,9 @@
-![Last commit](https://img.shields.io/github/last-commit/qqrm/bettercuck.svg)&nbsp;![Commit activity](https://img.shields.io/github/commit-activity/y/qqrm/bettercuck.svg)&nbsp;![Bugs](https://img.shields.io/github/issues/qqrm/bettercuck/bug.svg)&nbsp;![Enhancements](https://img.shields.io/github/issues/qqrm/bettercuck/enhancement.svg)
+![Last commit](https://img.shields.io/github/last-commit/qqrm/Dollchan-Extension-Tools.svg)&nbsp;![Commit activity](https://img.shields.io/github/commit-activity/y/qqrm/Dollchan-Extension-Tools.svg)&nbsp;![Bugs](https://img.shields.io/github/issues/qqrm/Dollchan-Extension-Tools/bug.svg)&nbsp;![Enhancements](https://img.shields.io/github/issues/qqrm/Dollchan-Extension-Tools/enhancement.svg)
 
 # ![dE](https://raw.githubusercontent.com/SthephanShinkufag/Dollchan-Extension-Tools/master/extension/v3/icons/logo-32.png) Dollchan Extension Tools
 
-- **[ [ESNEXT USERSCRIPT](https://github.com/qqrm/bettercuck/raw/master/src/Dollchan_Extension_Tools.es6.user.js) ]** &mdash; Firefox 77+, Chrome 85+, Opera 71+
-- **[ [ES5 USERSCRIPT](https://raw.github.com/qqrm/bettercuck/master/Dollchan_Extension_Tools.user.js) ]** &mdash; for old browsers
+- **[ [ESNEXT USERSCRIPT](https://github.com/qqrm/Dollchan-Extension-Tools/raw/master/src/Dollchan_Extension_Tools.es6.user.js) ]** &mdash; Firefox 77+, Chrome 85+, Opera 71+
+- **[ [ES5 USERSCRIPT](https://raw.github.com/qqrm/Dollchan-Extension-Tools/master/Dollchan_Extension_Tools.user.js) ]** &mdash; for old browsers
 - **[ [FIREFOX EXTENSION](https://addons.mozilla.org/firefox/addon/dollchan_extension/) ]**
 
 ---
@@ -11,7 +11,7 @@
 - **[ [Russian wiki](https://github.com/SthephanShinkufag/Dollchan-Extension-Tools/wiki) ]**
 - **[ [Homepage](https://dollchan.net/extension/) ]**
 - **Upstream:** [SthephanShinkufag/Dollchan-Extension-Tools](https://github.com/SthephanShinkufag/Dollchan-Extension-Tools)
-- **License:** © 2023 Dollchan Extension Tools Team.<br>See the [LICENSE file](https://github.com/qqrm/bettercuck/blob/master/LICENSE) for license rights and limitations (MIT).
+- **License:** © 2023 Dollchan Extension Tools Team.<br>See the [LICENSE file](https://github.com/qqrm/Dollchan-Extension-Tools/blob/master/LICENSE) for license rights and limitations (MIT).
 
 ---
 **Dollchan Extension** is the userscript and extension that combines various options & features, making you hang out on [imageboards](https://en.wikipedia.org/wiki/Imageboard) in an easier and more convenient way. If you have visited sites like [4chan.org](http://4chan.org/) or [2ch.hk](https://2ch.hk/), then you probably already heard about it.
