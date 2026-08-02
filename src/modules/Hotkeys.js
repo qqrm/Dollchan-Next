@@ -2,6 +2,22 @@
                                                    HOTKEYS
 =========================================================================================================== */
 
+function normalizeHotKeyGroup(group) {
+	const keys = Array.isArray(group) ? group : group ? [group] : [];
+	return [...new Set(keys.filter(key => Number.isInteger(key) && key > 0))];
+}
+
+function normalizeHotKeySets(keys) {
+	for(let i = 2; i <= 4; ++i) {
+		keys[i] = keys[i].map(normalizeHotKeyGroup);
+	}
+	return keys;
+}
+
+function findHotKeyAction(groups, key) {
+	return groups.findIndex(group => group.includes(key));
+}
+
 const HotKeys = {
 	cPost         : null,
 	enabled       : false,
@@ -9,7 +25,7 @@ const HotKeys = {
 	lastPageOffset: 0,
 	ntKeys        : null,
 	tKeys         : null,
-	version       : 7,
+	version       : 8,
 	clearCPost() {
 		this.cPost = null;
 		this.lastPageOffset = 0;
@@ -35,7 +51,7 @@ const HotKeys = {
 			});
 		}
 	},
-	getDefaultKeys: () => [HotKeys.version, nav.isFirefox, [
+	getDefaultKeys: () => normalizeHotKeySets([HotKeys.version, nav.isFirefox, [
 		// GLOBAL KEYS
 		/* One post/thread above      */ 0x004B /* = K          */,
 		/* One post/thread below      */ 0x004A /* = J          */,
@@ -63,7 +79,7 @@ const HotKeys = {
 		/* Expand thread  */ 0x0045 /* = E */
 	], [// THREAD KEYS
 		/* Update thread  */ 0x0055 /* = U */
-	]],
+	]]),
 	handleEvent(e) {
 		if(this._paused || e.metaKey) {
 			return;
@@ -101,7 +117,7 @@ const HotKeys = {
 			el.blur();
 		} else {
 			let post;
-			const globIdx = this.gKeys.indexOf(kc);
+			const globIdx = findHotKeyAction(this.gKeys, kc);
 			switch(globIdx) {
 			case 2: // Quick reply
 				if(postform.form) {
@@ -197,14 +213,14 @@ const HotKeys = {
 				break;
 			case -1:
 				if(isThr) {
-					idx = this.tKeys.indexOf(kc);
+					idx = findHotKeyAction(this.tKeys, kc);
 					if(idx === 0) { // Update thread
 						updater.forceLoad(null);
 						break;
 					}
 					return;
 				}
-				idx = this.ntKeys.indexOf(kc);
+				idx = findHotKeyAction(this.ntKeys, kc);
 				if(idx === -1) {
 					return;
 				} else if(idx === 2) { // Open thread
@@ -262,6 +278,7 @@ const HotKeys = {
 		if(!keys) {
 			return this.getDefaultKeys();
 		}
+		let needToSave = false;
 		if(keys[0] !== this.version) {
 			const tKeys = this.getDefaultKeys();
 			switch(keys[0]) {
@@ -286,15 +303,19 @@ const HotKeys = {
 				keys[2][18] = tKeys[2][18];
 			}
 			keys[0] = this.version;
-			setStored('DESU_keys', JSON.stringify(keys));
+			needToSave = true;
 		}
+		normalizeHotKeySets(keys);
 		if(keys[1] ^ nav.isFirefox) {
 			const mapFunc = nav.isFirefox ?
 				key => key === 189 ? 173 : key === 187 ? 61 : key === 186 ? 59 : key :
 				key => key === 173 ? 189 : key === 61 ? 187 : key === 59 ? 186 : key;
 			keys[1] = nav.isFirefox;
-			keys[2] = keys[2].map(mapFunc);
-			keys[3] = keys[3].map(mapFunc);
+			keys[2] = keys[2].map(group => group.map(mapFunc));
+			keys[3] = keys[3].map(group => group.map(mapFunc));
+			needToSave = true;
+		}
+		if(needToSave) {
 			setStored('DESU_keys', JSON.stringify(keys));
 		}
 		return keys;
@@ -361,39 +382,25 @@ class KeyEditListener {
 		this.cEl = null;
 		this.cKey = -1;
 		this.errorInput = false;
-		const aInputs = [...$Q('.de-input-key', popupEl)];
-		for(let i = 0, len = allKeys.length; i < len; ++i) {
-			const k = allKeys[i];
-			if(k !== 0) {
-				for(let j = i + 1; j < len; ++j) {
-					if(k === allKeys[j]) {
-						aInputs[i].classList.add('de-input-error');
-						aInputs[j].classList.add('de-input-error');
-						break;
-					}
-				}
-			}
-		}
 		this.popupEl = popupEl;
 		this.keys = keys;
 		this.initKeys = JSON.parse(JSON.stringify(keys));
 		this.allKeys = allKeys;
-		this.allInputs = aInputs;
-		this.errCount = $Q('.de-input-error', popupEl).length;
-		if(this.errCount !== 0) {
-			this.saveButton.disabled = true;
-		}
+		this.allInputs = [...$Q('.de-input-key', popupEl)];
+		this.errCount = 0;
+		this._refreshErrors();
 	}
 	static getEditMarkup(keys) {
 		const allKeys = [];
-		return [allKeys, `${ Lng.hotKeyEdit[lang].join('')
+		return [allKeys, `<p>${ Lng.hotKeyEditHelp[lang] }</p>${ Lng.hotKeyEdit[lang].join('')
 			.replace(/%l/g, '<label class="de-block">')
 			.replace(/%\/l/g, '</label>')
 			.replace(/%i([2-4])([0-9]+)(t)?/g, (all, id1, id2, isText) => {
-				const key = keys[+id1][+id2];
-				allKeys.push(key);
+				const keyGroup = normalizeHotKeyGroup(keys[+id1][+id2]);
+				keys[+id1][+id2] = keyGroup;
+				allKeys.push(keyGroup);
 				return `<input class="de-input-key" type="text" de-id1="${ id1 }" de-id2="${ id2 }` +
-					`" size="16" value="${ KeyEditListener.getStrKey(key) }${
+					`" size="24" value="${ KeyEditListener.getStrKeys(keyGroup) }${
 						isText ? '" de-text' : '"' } readonly>`;
 			}) }<input type="button" id="de-keys-save" class="de-button" value="${ Lng.save[lang] }">` +
 			`<input type="button" id="de-keys-reset" class="de-button" value="${ Lng.reset[lang] }">`];
@@ -404,6 +411,9 @@ class KeyEditListener {
 			(key & 0x4000 ? 'Alt+' : '') +
 			KeyEditListener.keyCodes[key & 0xFFF];
 	}
+	static getStrKeys(keys) {
+		return normalizeHotKeyGroup(keys).map(KeyEditListener.getStrKey).join(', ');
+	}
 	static setTitle(el, idx) {
 		let title = el.getAttribute('de-title');
 		if(!title) {
@@ -411,7 +421,7 @@ class KeyEditListener {
 			el.setAttribute('de-title', title);
 		}
 		if(HotKeys.enabled && idx !== -1) {
-			title += ` [${ KeyEditListener.getStrKey(HotKeys.gKeys[idx]) }]`;
+			title += ` [${ KeyEditListener.getStrKeys(HotKeys.gKeys[idx]) }]`;
 		}
 		el.title = title;
 	}
@@ -481,26 +491,17 @@ class KeyEditListener {
 				this.cKey = -1;
 				return;
 			}
-			let str = '';
-			if(e.ctrlKey) {
-				str += 'Ctrl+';
-			}
-			if(e.shiftKey) {
-				str += 'Shift+';
-			}
-			if(e.altKey) {
-				str += 'Alt+';
-			}
 			if(key === 16 || key === 17 || key === 18) {
 				this.errorInput = true;
-				this.cKey = 0;
+				this.cKey = -1;
 			} else {
 				this.cKey = key | (e.ctrlKey ? 0x1000 : 0) | (e.shiftKey ? 0x2000 : 0) |
 					(e.altKey ? 0x4000 : 0) | (this.cEl.hasAttribute('de-text') ? 0x8000 : 0);
 				this.errorInput = false;
-				str += keyStr;
+				const idx = this.allInputs.indexOf(this.cEl);
+				const keys = [...this.allKeys[idx], this.cKey];
+				this.cEl.value = KeyEditListener.getStrKeys(keys);
 			}
-			this.cEl.value = str;
 			break;
 		}
 		case 'keyup': {
@@ -509,55 +510,35 @@ class KeyEditListener {
 			if(!el || key === -1) {
 				return;
 			}
-			let rEl;
-			const isError = el.classList.contains('de-input-error');
-			if(!this.errorInput && key !== -1) {
-				let idx = this.allInputs.indexOf(el);
-				const oKey = this.allKeys[idx];
-				if(oKey === key) {
-					this.errorInput = false;
-					break;
-				}
-				const rIdx = key === 0 ? -1 : this.allKeys.indexOf(key);
-				this.allKeys[idx] = key;
-				if(isError) {
-					idx = this.allKeys.indexOf(oKey);
-					if(idx !== -1 && this.allKeys.indexOf(oKey, idx + 1) === -1) {
-						rEl = this.allInputs[idx];
-						if(rEl.classList.contains('de-input-error')) {
-							this.errCount--;
-							rEl.classList.remove('de-input-error');
-						}
-					}
-					if(rIdx === -1) {
-						this.errCount--;
-						el.classList.remove('de-input-error');
-					}
-				}
-				if(rIdx === -1) {
-					this.keys[+el.getAttribute('de-id1')][+el.getAttribute('de-id2')] = key;
-					if(this.errCount === 0) {
-						this.saveButton.disabled = false;
-					}
-					this.errorInput = false;
-					break;
-				}
-				rEl = this.allInputs[rIdx];
-				if(!rEl.classList.contains('de-input-error')) {
-					this.errCount++;
-					rEl.classList.add('de-input-error');
-				}
+			if(this.errorInput) {
+				return;
 			}
-			if(!isError) {
-				this.errCount++;
-				el.classList.add('de-input-error');
-			}
-			if(this.errCount !== 0) {
-				this.saveButton.disabled = true;
-			}
+			const idx = this.allInputs.indexOf(el);
+			const keys = key === 0 ? [] : normalizeHotKeyGroup([...this.allKeys[idx], key]);
+			this.allKeys[idx] = keys;
+			this.keys[+el.getAttribute('de-id1')][+el.getAttribute('de-id2')] = keys;
+			el.value = KeyEditListener.getStrKeys(keys);
+			this._refreshErrors();
+			this.cKey = -1;
 		}
 		}
 		e.preventDefault();
+	}
+	_refreshErrors() {
+		const owners = new Map();
+		const errorInputs = new Set();
+		this.allInputs.forEach(el => el.classList.remove('de-input-error'));
+		this.allKeys.forEach((keys, idx) => keys.forEach(key => {
+			if(owners.has(key)) {
+				errorInputs.add(idx);
+				errorInputs.add(owners.get(key));
+			} else {
+				owners.set(key, idx);
+			}
+		}));
+		errorInputs.forEach(idx => this.allInputs[idx].classList.add('de-input-error'));
+		this.errCount = errorInputs.size;
+		this.saveButton.disabled = this.errCount !== 0;
 	}
 }
 // Browsers have different codes for these keys (see HotKeys.readKeys):

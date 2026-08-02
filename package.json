@@ -7,13 +7,14 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/SthephanShinkufag/Dollchan-Extension-Tools.git"
+		"url": "https://github.com/qqrm/bettercuck.git"
 	},
 	"scripts": {
-		"start:firefox": "web-ext run --source-dir ./extension/v2"
+		"start:firefox": "web-ext run --source-dir ./extension/v2",
+		"test": "node --test test/content-matching.test.cjs"
 	},
 	"bugs": {
-		"url": "https://github.com/SthephanShinkufag/Dollchan-Extension-Tools/issues"
+		"url": "https://github.com/qqrm/bettercuck/issues"
 	},
 	"babel": {
 		"compact": false,

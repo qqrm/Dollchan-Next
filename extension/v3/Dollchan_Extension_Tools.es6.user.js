@@ -28,7 +28,7 @@
 'use strict';
 
 const version = '24.9.16.0';
-const commit = '665d981';
+const commit = 'fa2468a';
 
 /* ==[ GlobalVars.js ]== */
 
@@ -981,6 +981,10 @@ const Lng = {
 			'Скрыть схожий текст',
 			'Hide similar text',
 			'Сховати схожий текст'],
+		texact: [
+			'Скрывать точное совпадение текста',
+			'Hide exact text matches',
+			'Ховати точний збіг тексту'],
 		refs: [
 			'Скрыть с ответами',
 			'Hide with replies',
@@ -1080,6 +1084,10 @@ const Lng = {
 		'Помилка: не можу завантажити на saucenao.com'],
 
 	// Hotkeys editor
+	hotKeyEditHelp: [
+		'Нажимайте несколько клавиш, чтобы добавить альтернативы. Delete очищает команду.',
+		'Press multiple keys to add alternatives. Delete clears the command.',
+		'Натискайте кілька клавіш, щоб додати альтернативи. Delete очищає команду.'],
 	hotKeyEdit: [[
 		// Ru
 		'%l%i24 – предыдущая страница/картинка%/l',
@@ -1880,6 +1888,94 @@ function strToRegExp(str, notGlobal) {
 	const l = str.lastIndexOf('/');
 	const flags = str.substr(l + 1);
 	return new RegExp(str.substr(1, l - 1), notGlobal ? flags.replace('g', '') : flags);
+}
+
+// Normalizes post text for persistent exact/fuzzy hiding rules.
+function normalizePostText(text, fuzzy = false) {
+	let value = String(text).toLowerCase().replace(/ё/g, 'е');
+	if(value.normalize) {
+		value = value.normalize('NFKC');
+	}
+	if(fuzzy) {
+		value = value
+			.replace(/https?:\/\/[^\s]+/g, ' url ')
+			.replace(/>>\d+/g, ' ref ')
+			.replace(/[^a-zа-я0-9]+/gi, ' ');
+	}
+	return value.replace(/\s+/g, ' ').trim();
+}
+
+function getTextSimilarity(textA, textB) {
+	const a = normalizePostText(textA, true);
+	const b = normalizePostText(textB, true);
+	if(!a || !b) {
+		return 0;
+	}
+	if(a === b) {
+		return 1;
+	}
+	const makeGrams = text => {
+		const value = ` ${ text } `;
+		if(value.length <= 3) {
+			return [value];
+		}
+		const grams = [];
+		for(let i = 0; i <= value.length - 3; ++i) {
+			grams.push(value.substr(i, 3));
+		}
+		return grams;
+	};
+	const dice = (left, right) => {
+		const counts = new Map();
+		let matches = 0;
+		for(const item of left) {
+			counts.set(item, (counts.get(item) || 0) + 1);
+		}
+		for(const item of right) {
+			const count = counts.get(item) || 0;
+			if(count) {
+				matches++;
+				counts.set(item, count - 1);
+			}
+		}
+		return 2 * matches / (left.length + right.length);
+	};
+	const wordsA = a.split(' ');
+	const wordsB = b.split(' ');
+	const maxWords = Math.max(wordsA.length, wordsB.length);
+	const minWords = Math.min(wordsA.length, wordsB.length);
+	if(maxWords > minWords * 2) {
+		return 0;
+	}
+	const charScore = dice(makeGrams(a), makeGrams(b));
+	const wordScore = dice(wordsA, wordsB);
+	return charScore * 0.65 + wordScore * 0.35;
+}
+
+function isPostTextSimilar(textA, textB) {
+	const a = normalizePostText(textA, true);
+	const b = normalizePostText(textB, true);
+	if(!a || !b) {
+		return false;
+	}
+	if(a === b) {
+		return true;
+	}
+	const minWords = Math.min(a.split(' ').length, b.split(' ').length);
+	const threshold = minWords <= 2 ? 0.88 : minWords <= 5 ? 0.72 : 0.66;
+	return getTextSimilarity(a, b) >= threshold;
+}
+
+function getPerceptualHashDistance(hashA, hashB) {
+	if(!/^[0-9a-f]{16}$/i.test(hashA) || !/^[0-9a-f]{16}$/i.test(hashB)) {
+		return Infinity;
+	}
+	const bitCounts = [0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4];
+	let distance = 0;
+	for(let i = 0; i < 16; ++i) {
+		distance += bitCounts[parseInt(hashA[i], 16) ^ parseInt(hashB[i], 16)];
+	}
+	return distance;
 }
 
 // OTHER UTILS
@@ -5457,6 +5553,22 @@ class Menu {
                                                    HOTKEYS
 =========================================================================================================== */
 
+function normalizeHotKeyGroup(group) {
+	const keys = Array.isArray(group) ? group : group ? [group] : [];
+	return [...new Set(keys.filter(key => Number.isInteger(key) && key > 0))];
+}
+
+function normalizeHotKeySets(keys) {
+	for(let i = 2; i <= 4; ++i) {
+		keys[i] = keys[i].map(normalizeHotKeyGroup);
+	}
+	return keys;
+}
+
+function findHotKeyAction(groups, key) {
+	return groups.findIndex(group => group.includes(key));
+}
+
 const HotKeys = {
 	cPost         : null,
 	enabled       : false,
@@ -5464,7 +5576,7 @@ const HotKeys = {
 	lastPageOffset: 0,
 	ntKeys        : null,
 	tKeys         : null,
-	version       : 7,
+	version       : 8,
 	clearCPost() {
 		this.cPost = null;
 		this.lastPageOffset = 0;
@@ -5490,7 +5602,7 @@ const HotKeys = {
 			});
 		}
 	},
-	getDefaultKeys: () => [HotKeys.version, nav.isFirefox, [
+	getDefaultKeys: () => normalizeHotKeySets([HotKeys.version, nav.isFirefox, [
 		// GLOBAL KEYS
 		/* One post/thread above      */ 0x004B /* = K          */,
 		/* One post/thread below      */ 0x004A /* = J          */,
@@ -5518,7 +5630,7 @@ const HotKeys = {
 		/* Expand thread  */ 0x0045 /* = E */
 	], [// THREAD KEYS
 		/* Update thread  */ 0x0055 /* = U */
-	]],
+	]]),
 	handleEvent(e) {
 		if(this._paused || e.metaKey) {
 			return;
@@ -5556,7 +5668,7 @@ const HotKeys = {
 			el.blur();
 		} else {
 			let post;
-			const globIdx = this.gKeys.indexOf(kc);
+			const globIdx = findHotKeyAction(this.gKeys, kc);
 			switch(globIdx) {
 			case 2: // Quick reply
 				if(postform.form) {
@@ -5652,14 +5764,14 @@ const HotKeys = {
 				break;
 			case -1:
 				if(isThr) {
-					idx = this.tKeys.indexOf(kc);
+					idx = findHotKeyAction(this.tKeys, kc);
 					if(idx === 0) { // Update thread
 						updater.forceLoad(null);
 						break;
 					}
 					return;
 				}
-				idx = this.ntKeys.indexOf(kc);
+				idx = findHotKeyAction(this.ntKeys, kc);
 				if(idx === -1) {
 					return;
 				} else if(idx === 2) { // Open thread
@@ -5717,6 +5829,7 @@ const HotKeys = {
 		if(!keys) {
 			return this.getDefaultKeys();
 		}
+		let needToSave = false;
 		if(keys[0] !== this.version) {
 			const tKeys = this.getDefaultKeys();
 			switch(keys[0]) {
@@ -5741,15 +5854,19 @@ const HotKeys = {
 				keys[2][18] = tKeys[2][18];
 			}
 			keys[0] = this.version;
-			setStored('DESU_keys', JSON.stringify(keys));
+			needToSave = true;
 		}
+		normalizeHotKeySets(keys);
 		if(keys[1] ^ nav.isFirefox) {
 			const mapFunc = nav.isFirefox ?
 				key => key === 189 ? 173 : key === 187 ? 61 : key === 186 ? 59 : key :
 				key => key === 173 ? 189 : key === 61 ? 187 : key === 59 ? 186 : key;
 			keys[1] = nav.isFirefox;
-			keys[2] = keys[2].map(mapFunc);
-			keys[3] = keys[3].map(mapFunc);
+			keys[2] = keys[2].map(group => group.map(mapFunc));
+			keys[3] = keys[3].map(group => group.map(mapFunc));
+			needToSave = true;
+		}
+		if(needToSave) {
 			setStored('DESU_keys', JSON.stringify(keys));
 		}
 		return keys;
@@ -5816,39 +5933,25 @@ class KeyEditListener {
 		this.cEl = null;
 		this.cKey = -1;
 		this.errorInput = false;
-		const aInputs = [...$Q('.de-input-key', popupEl)];
-		for(let i = 0, len = allKeys.length; i < len; ++i) {
-			const k = allKeys[i];
-			if(k !== 0) {
-				for(let j = i + 1; j < len; ++j) {
-					if(k === allKeys[j]) {
-						aInputs[i].classList.add('de-input-error');
-						aInputs[j].classList.add('de-input-error');
-						break;
-					}
-				}
-			}
-		}
 		this.popupEl = popupEl;
 		this.keys = keys;
 		this.initKeys = JSON.parse(JSON.stringify(keys));
 		this.allKeys = allKeys;
-		this.allInputs = aInputs;
-		this.errCount = $Q('.de-input-error', popupEl).length;
-		if(this.errCount !== 0) {
-			this.saveButton.disabled = true;
-		}
+		this.allInputs = [...$Q('.de-input-key', popupEl)];
+		this.errCount = 0;
+		this._refreshErrors();
 	}
 	static getEditMarkup(keys) {
 		const allKeys = [];
-		return [allKeys, `${ Lng.hotKeyEdit[lang].join('')
+		return [allKeys, `<p>${ Lng.hotKeyEditHelp[lang] }</p>${ Lng.hotKeyEdit[lang].join('')
 			.replace(/%l/g, '<label class="de-block">')
 			.replace(/%\/l/g, '</label>')
 			.replace(/%i([2-4])([0-9]+)(t)?/g, (all, id1, id2, isText) => {
-				const key = keys[+id1][+id2];
-				allKeys.push(key);
+				const keyGroup = normalizeHotKeyGroup(keys[+id1][+id2]);
+				keys[+id1][+id2] = keyGroup;
+				allKeys.push(keyGroup);
 				return `<input class="de-input-key" type="text" de-id1="${ id1 }" de-id2="${ id2 }` +
-					`" size="16" value="${ KeyEditListener.getStrKey(key) }${
+					`" size="24" value="${ KeyEditListener.getStrKeys(keyGroup) }${
 						isText ? '" de-text' : '"' } readonly>`;
 			}) }<input type="button" id="de-keys-save" class="de-button" value="${ Lng.save[lang] }">` +
 			`<input type="button" id="de-keys-reset" class="de-button" value="${ Lng.reset[lang] }">`];
@@ -5859,6 +5962,9 @@ class KeyEditListener {
 			(key & 0x4000 ? 'Alt+' : '') +
 			KeyEditListener.keyCodes[key & 0xFFF];
 	}
+	static getStrKeys(keys) {
+		return normalizeHotKeyGroup(keys).map(KeyEditListener.getStrKey).join(', ');
+	}
 	static setTitle(el, idx) {
 		let title = el.getAttribute('de-title');
 		if(!title) {
@@ -5866,7 +5972,7 @@ class KeyEditListener {
 			el.setAttribute('de-title', title);
 		}
 		if(HotKeys.enabled && idx !== -1) {
-			title += ` [${ KeyEditListener.getStrKey(HotKeys.gKeys[idx]) }]`;
+			title += ` [${ KeyEditListener.getStrKeys(HotKeys.gKeys[idx]) }]`;
 		}
 		el.title = title;
 	}
@@ -5936,26 +6042,17 @@ class KeyEditListener {
 				this.cKey = -1;
 				return;
 			}
-			let str = '';
-			if(e.ctrlKey) {
-				str += 'Ctrl+';
-			}
-			if(e.shiftKey) {
-				str += 'Shift+';
-			}
-			if(e.altKey) {
-				str += 'Alt+';
-			}
 			if(key === 16 || key === 17 || key === 18) {
 				this.errorInput = true;
-				this.cKey = 0;
+				this.cKey = -1;
 			} else {
 				this.cKey = key | (e.ctrlKey ? 0x1000 : 0) | (e.shiftKey ? 0x2000 : 0) |
 					(e.altKey ? 0x4000 : 0) | (this.cEl.hasAttribute('de-text') ? 0x8000 : 0);
 				this.errorInput = false;
-				str += keyStr;
+				const idx = this.allInputs.indexOf(this.cEl);
+				const keys = [...this.allKeys[idx], this.cKey];
+				this.cEl.value = KeyEditListener.getStrKeys(keys);
 			}
-			this.cEl.value = str;
 			break;
 		}
 		case 'keyup': {
@@ -5964,55 +6061,35 @@ class KeyEditListener {
 			if(!el || key === -1) {
 				return;
 			}
-			let rEl;
-			const isError = el.classList.contains('de-input-error');
-			if(!this.errorInput && key !== -1) {
-				let idx = this.allInputs.indexOf(el);
-				const oKey = this.allKeys[idx];
-				if(oKey === key) {
-					this.errorInput = false;
-					break;
-				}
-				const rIdx = key === 0 ? -1 : this.allKeys.indexOf(key);
-				this.allKeys[idx] = key;
-				if(isError) {
-					idx = this.allKeys.indexOf(oKey);
-					if(idx !== -1 && this.allKeys.indexOf(oKey, idx + 1) === -1) {
-						rEl = this.allInputs[idx];
-						if(rEl.classList.contains('de-input-error')) {
-							this.errCount--;
-							rEl.classList.remove('de-input-error');
-						}
-					}
-					if(rIdx === -1) {
-						this.errCount--;
-						el.classList.remove('de-input-error');
-					}
-				}
-				if(rIdx === -1) {
-					this.keys[+el.getAttribute('de-id1')][+el.getAttribute('de-id2')] = key;
-					if(this.errCount === 0) {
-						this.saveButton.disabled = false;
-					}
-					this.errorInput = false;
-					break;
-				}
-				rEl = this.allInputs[rIdx];
-				if(!rEl.classList.contains('de-input-error')) {
-					this.errCount++;
-					rEl.classList.add('de-input-error');
-				}
+			if(this.errorInput) {
+				return;
 			}
-			if(!isError) {
-				this.errCount++;
-				el.classList.add('de-input-error');
-			}
-			if(this.errCount !== 0) {
-				this.saveButton.disabled = true;
-			}
+			const idx = this.allInputs.indexOf(el);
+			const keys = key === 0 ? [] : normalizeHotKeyGroup([...this.allKeys[idx], key]);
+			this.allKeys[idx] = keys;
+			this.keys[+el.getAttribute('de-id1')][+el.getAttribute('de-id2')] = keys;
+			el.value = KeyEditListener.getStrKeys(keys);
+			this._refreshErrors();
+			this.cKey = -1;
 		}
 		}
 		e.preventDefault();
+	}
+	_refreshErrors() {
+		const owners = new Map();
+		const errorInputs = new Set();
+		this.allInputs.forEach(el => el.classList.remove('de-input-error'));
+		this.allKeys.forEach((keys, idx) => keys.forEach(key => {
+			if(owners.has(key)) {
+				errorInputs.add(idx);
+				errorInputs.add(owners.get(key));
+			} else {
+				owners.set(key, idx);
+			}
+		}));
+		errorInputs.forEach(idx => this.allInputs[idx].classList.add('de-input-error'));
+		this.errCount = errorInputs.size;
+		this.saveButton.disabled = this.errCount !== 0;
 	}
 }
 // Browsers have different codes for these keys (see HotKeys.readKeys):
@@ -7355,7 +7432,7 @@ const Spells = Object.create({
 	get names() {
 		return [
 			'words', 'exp', 'exph', 'imgn', 'ihash', 'subj', 'name', 'trip', 'img', 'sage', 'op', 'tlen',
-			'all', 'video', 'wipe', 'num', 'vauthor', '//', 'uid'
+			'all', 'video', 'wipe', 'num', 'vauthor', '//', 'uid', 'texact', 'tmatch'
 		];
 	},
 	get needArg() {
@@ -7363,7 +7440,8 @@ const Spells = Object.create({
 			/* words */ true, /* exp */ true, /* exph */ true, /* imgn */ true, /* ihash */ true,
 			/* subj */ false, /* name */ false, /* trip */ false, /* img */ false, /* sage */ false,
 			/* op */ false, /* tlen */ false, /* all */ false, /* video */ false, /* wipe */ false,
-			/* num */ true, /* vauthor */ true, /* // comment */ false, /* uid */ true
+			/* num */ true, /* vauthor */ true, /* // comment */ false, /* uid */ true,
+			/* texact */ true, /* tmatch */ true
 		];
 	},
 	get outreps() {
@@ -7374,7 +7452,7 @@ const Spells = Object.create({
 		this._initSpells();
 		return this.reps;
 	},
-	async addSpell(type, arg, isNeg) {
+	async addSpell(type, arg, isNeg, customScope) {
 		const inputEl = $id('de-spell-txt');
 		const value = inputEl?.value;
 		const checkboxEl = $q('input[info="hideBySpell"]');
@@ -7388,7 +7466,9 @@ const Spells = Object.create({
 			}
 			let idx;
 			let isAdded = true;
-			const scope = aib.t ? [aib.b, aib.t] : null;
+			const scope = typeof customScope === 'undefined' ?
+				aib.t ? [aib.b, aib.t] : null :
+				customScope;
 			if(spells[1]) {
 				const sScope = String(scope);
 				const sArg = String(arg);
@@ -7517,6 +7597,8 @@ const Spells = Object.create({
 		case 6: // #name
 		case 7: // #trip
 		case 18: // #uid
+		case 19: // #texact
+		case 20: // #tmatch
 		case 16: return `${ spell }(${ val.replace(/([)\\])/g, '\\$1').replace(/\n/g, '\\n') })`; // #vauthor
 		case 17: return '//' + String(val); // comment
 		default: return `${ spell }(${ String(val) })`;
@@ -8131,6 +8213,8 @@ class SpellsCodegen {
 		case 12: // #all
 		case 16: // #vauthor
 		case 18: // #uid
+		case 19: // #texact
+		case 20: // #tmatch
 			m = SpellsCodegen._getText(str, true);
 			if(m) {
 				return [i + m[0], [spellType, spellIdx === 0 ? m[1].toLowerCase() : m[1], scope]];
@@ -8147,9 +8231,9 @@ class SpellsCodegen {
 			}
 			break;
 		case 4: // #ihash
-			m = str.match(/^\((\d+)\)/);
-			if(!isNaN(+m[1])) {
-				return [i + m[0].length, [spellType, +m[1], scope]];
+			m = str.match(/^\((?:(\d+)|(p:[0-9a-f]{16}))\)/i);
+			if(m) {
+				return [i + m[0].length, [spellType, m[1] ? +m[1] : m[2].toLowerCase(), scope]];
 			}
 			break;
 		case 8: // #img
@@ -8426,6 +8510,8 @@ class SpellsInterpreter {
 			return this._num(val);
 		case 16: return this._vauthor(val);
 		case 18: return this._uid(val);
+		case 19: return this._texact(val);
+		case 20: return this._tmatch(val);
 		}
 	}
 
@@ -8438,13 +8524,30 @@ class SpellsInterpreter {
 	_exph(val) {
 		return val.test(this._post.html);
 	}
-	async _ihash(val) {
+	_ihash(val) {
+		const isLegacy = typeof val === 'number';
+		const cacheName = isLegacy ? '_legacyImageHashes' : '_perceptualImageHashes';
+		if(this[cacheName]) {
+			return this._matchesImageHash(this[cacheName], val, isLegacy);
+		}
+		const hashes = [];
 		for(const image of this._post.images) {
-			if((image instanceof AttachedImage) && await ImagesHashStorage.getHash(image) === val) {
-				return true;
+			if(image instanceof AttachedImage) {
+				hashes.push(isLegacy ? ImagesHashStorage.getHash(image) :
+					ImagesHashStorage.getPerceptualHash(image));
 			}
 		}
-		return false;
+		return Promise.all(hashes).then(values => {
+			this[cacheName] = values;
+			return this._matchesImageHash(values, val, isLegacy);
+		});
+	}
+	_matchesImageHash(hashes, val, isLegacy) {
+		if(isLegacy) {
+			return hashes.includes(val);
+		}
+		const expected = val.substr(2);
+		return hashes.some(hash => getPerceptualHashDistance(hash, expected) <= 8);
 	}
 	_img(val) {
 		const { images } = this._post;
@@ -8520,6 +8623,15 @@ class SpellsInterpreter {
 	_tlen(val) {
 		const text = this._post.text.replace(/\s+(?=\s)|\n/g, '');
 		return !val ? !!text : SpellsInterpreter._tlenNumHelper(val, text.length);
+	}
+	_texact(val) {
+		if(!this._normalizedText) {
+			this._normalizedText = normalizePostText(this._post.text);
+		}
+		return this._normalizedText === val;
+	}
+	_tmatch(val) {
+		return isPostTextSimilar(val, this._post.text);
 	}
 	_trip(val) {
 		const pTrip = this._post.posterTrip;
@@ -10914,24 +11026,25 @@ class AbstractPost {
 			return;
 		}
 		case 'hide-imgn':
-			await Spells.addSpell(3 /* #imgn */, `/${ escapeRegExp(this.images.firstAttach.name) }/`, false);
+			await Spells.addSpell(3 /* #imgn */, `/${ escapeRegExp(this.images.firstAttach.name) }/`, false,
+				[aib.b, false]);
 			return;
 		case 'hide-ihash': {
-			const hash = await ImagesHashStorage.getHash(this.images.firstAttach);
+			const hash = await ImagesHashStorage.getPerceptualHash(this.images.firstAttach);
 			if(hash !== -1) {
-				await Spells.addSpell(4 /* #ihash */, hash, false);
+				await Spells.addSpell(4 /* #ihash */, `p:${ hash }`, false, [aib.b, false]);
 			}
 			return;
 		}
 		case 'hide-noimg': await Spells.addSpell(0x108 /* (#all & !#img) */, '', true); return;
 		case 'hide-post': this.setUserVisib(!this.isHidden); break;
-		case 'hide-text': {
-			const words = Post.getWrds(this.text);
-			for(let post = Thread.first.op; post; post = post.next) {
-				Post.findSameText(num, !isHide, words, post);
-			}
+		case 'hide-texact':
+			await Spells.addSpell(19 /* #texact */, normalizePostText(this.text), false, [aib.b, false]);
 			return;
-		}
+		case 'hide-text':
+			await Spells.addSpell(20 /* #tmatch */, normalizePostText(this.text, true), false,
+				[aib.b, false]);
+			return;
 		case 'hide-notext': await Spells.addSpell(0x10B /* (#all & !#tlen) */, '', true); return;
 		case 'hide-refs':
 			this.ref.toggleRef(isHide, true);
@@ -11050,49 +11163,6 @@ class Post extends AbstractPost {
 			'<svg class="de-btn-reply"><use xlink:href="#de-symbol-post-reply"/></svg>' + (isOp ?
 			(noExpThr ? '' : '<svg class="de-btn-expthr"><use xlink:href="#de-symbol-post-expthr"/></svg>') +
 				'<svg class="de-btn-fav"><use xlink:href="#de-symbol-post-fav"/></svg>' : '');
-	}
-	static findSameText(pNum, isHidden, words, curPost) {
-		const curWords = Post.getWrds(curPost.text);
-		const len = curWords.length;
-		let i = words.length;
-		const olen = i;
-		let _olen = i;
-		let n = 0;
-		if(len < olen * 0.4 || len > olen * 3) {
-			return;
-		}
-		while(i--) {
-			if(olen > 6 && words[i].length < 3) {
-				_olen--;
-				continue;
-			}
-			let j = len;
-			while(j--) {
-				if(curWords[j] === words[i] || words[i].match(/>>\d+/) && curWords[j].match(/>>\d+/)) {
-					n++;
-				}
-			}
-		}
-		if(n < _olen * 0.4 || len > _olen * 3) {
-			return;
-		}
-		if(isHidden) {
-			if(curPost.spellHidden) {
-				Post.Note.reset();
-			} else {
-				curPost.setVisib(false);
-			}
-			if(curPost.userToggled) {
-				HiddenPosts.removeStorage(curPost.num);
-				curPost.userToggled = false;
-			}
-		} else {
-			curPost.setUserVisib(true, true, 'similar to >>' + pNum);
-		}
-		return false;
-	}
-	static getWrds(text) {
-		return text.replace(/\s+/g, ' ').replace(/[^a-zа-яё ]/ig, '').trim().substring(0, 800).split(' ');
 	}
 	static hideContent(headerEl, btnHide, isUser, isHide) {
 		if(!isHide) {
@@ -11362,7 +11432,7 @@ class Post extends AbstractPost {
 			this.posterTrip ? item('trip') : '' }${
 			this.posterUid ? item('uid') : '' }${
 			this.images.hasAttachments ? item('img') + item('imgn') + item('ihash') : item('noimg') }${
-			this.text ? item('text') : item('notext') }${
+			this.text ? item('texact') + item('text') : item('notext') }${
 			!Cfg.hideRefPsts && this.ref.hasMap ? item('refs') : '' }${
 			item('refsonly') }`;
 	}
@@ -13010,9 +13080,17 @@ const ImagesHashStorage = Object.create({
 		Object.defineProperty(this, 'getHash', { value });
 		return value;
 	},
+	get getPerceptualHash() {
+		const value = this._getPerceptualHashHelper.bind(this);
+		Object.defineProperty(this, 'getPerceptualHash', { value });
+		return value;
+	},
 	endFn() {
 		if($hasProp(this, '_storage')) {
 			sesStorage['de-imageshash'] = JSON.stringify(this._storage);
+		}
+		if($hasProp(this, '_perceptualStorage')) {
+			sesStorage['de-imagesphash'] = JSON.stringify(this._perceptualStorage);
 		}
 		if($hasProp(this, '_workers')) {
 			this._workers.clearWorkers();
@@ -13034,6 +13112,17 @@ const ImagesHashStorage = Object.create({
 			value = {};
 		}
 		Object.defineProperty(this, '_storage', { value });
+		return value;
+	},
+	get _perceptualStorage() {
+		let value = null;
+		try {
+			value = JSON.parse(sesStorage['de-imagesphash']);
+		} catch(err) {}
+		if(!value) {
+			value = {};
+		}
+		Object.defineProperty(this, '_perceptualStorage', { value });
 		return value;
 	},
 	get _workers() {
@@ -13072,21 +13161,44 @@ const ImagesHashStorage = Object.create({
 				hash &= ~g;
 			}
 		}
-		return { hash };
-	},
-	async _getHashHelper({ el, src }) {
-		if(src in this._storage) {
-			return this._storage[src];
+		const sample = (x, y) => {
+			let temp = y / 7 * (oldh - 1);
+			const top = Math.min(temp | 0, oldh - 2);
+			const vertical = temp - top;
+			temp = x / 8 * (oldw - 1);
+			const left = Math.min(temp | 0, oldw - 2);
+			const horizontal = temp - left;
+			return buf[top * oldw + left] * ((1 - horizontal) * (1 - vertical)) +
+				buf[top * oldw + left + 1] * (horizontal * (1 - vertical)) +
+				buf[(top + 1) * oldw + left + 1] * (horizontal * vertical) +
+				buf[(top + 1) * oldw + left] * ((1 - horizontal) * vertical);
+		};
+		let perceptualHash = '';
+		let bits = 0;
+		let nibble = 0;
+		for(let y = 0; y < 8; ++y) {
+			let previous = sample(0, y);
+			for(let x = 1; x < 9; ++x) {
+				const current = sample(x, y);
+				nibble = (nibble << 1) | (previous > current ? 1 : 0);
+				previous = current;
+				if(++bits === 4) {
+					perceptualHash += nibble.toString(16);
+					bits = 0;
+					nibble = 0;
+				}
+			}
 		}
+		return { hash, perceptualHash };
+	},
+	async _getImageHashes({ el, src }) {
 		if(!el.complete) {
 			await new Promise(resolve => el.addEventListener('load', () => resolve()));
 		}
 		el.removeAttribute('loading');
 		if(el.naturalWidth + el.naturalHeight === 0) {
-			return -1;
+			return null;
 		}
-		let data;
-		let val = -1;
 		const { naturalWidth: w, naturalHeight: h } = el;
 		const cnv = this._canvas;
 		cnv.width = w;
@@ -13094,15 +13206,34 @@ const ImagesHashStorage = Object.create({
 		const ctx = cnv.getContext('2d');
 		ctx.drawImage(el, 0, 0);
 		const { buffer } = ctx.getImageData(0, 0, w, h).data;
-		if(buffer) {
-			data = await new Promise(resolve =>
-				this._workers.runWorker([buffer, w, h], [buffer], val => resolve(val)));
-			if(data && ('hash' in data)) {
-				val = data.hash;
+		if(!buffer) {
+			return null;
+		}
+		const data = await new Promise(resolve =>
+			this._workers.runWorker([buffer, w, h], [buffer], value => resolve(value)));
+		if(data) {
+			if('hash' in data) {
+				this._storage[src] = data.hash;
+			}
+			if('perceptualHash' in data) {
+				this._perceptualStorage[src] = data.perceptualHash;
 			}
 		}
-		this._storage[src] = val;
-		return val;
+		return data;
+	},
+	async _getHashHelper({ el, src }) {
+		if(src in this._storage) {
+			return this._storage[src];
+		}
+		const data = await this._getImageHashes({ el, src });
+		return data && ('hash' in data) ? data.hash : -1;
+	},
+	async _getPerceptualHashHelper({ el, src }) {
+		if(src in this._perceptualStorage) {
+			return this._perceptualStorage[src];
+		}
+		const data = await this._getImageHashes({ el, src });
+		return data && ('perceptualHash' in data) ? data.perceptualHash : -1;
 	}
 });
 

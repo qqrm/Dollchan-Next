@@ -1,16 +1,17 @@
-![Last commit](https://img.shields.io/github/last-commit/SthephanShinkufag/Dollchan-Extension-Tools.svg)&nbsp;![Commit activity](https://img.shields.io/github/commit-activity/y/SthephanShinkufag/Dollchan-Extension-Tools.svg)&nbsp;![Bugs](https://img.shields.io/github/issues/SthephanShinkufag/Dollchan-Extension-Tools/bug.svg)&nbsp;![Enhancements](https://img.shields.io/github/issues/SthephanShinkufag/Dollchan-Extension-Tools/enhancement.svg)
+![Last commit](https://img.shields.io/github/last-commit/qqrm/bettercuck.svg)&nbsp;![Commit activity](https://img.shields.io/github/commit-activity/y/qqrm/bettercuck.svg)&nbsp;![Bugs](https://img.shields.io/github/issues/qqrm/bettercuck/bug.svg)&nbsp;![Enhancements](https://img.shields.io/github/issues/qqrm/bettercuck/enhancement.svg)
 
 # ![dE](https://raw.githubusercontent.com/SthephanShinkufag/Dollchan-Extension-Tools/master/extension/v3/icons/logo-32.png) Dollchan Extension Tools
 
-- **[ [ESNEXT USERSCRIPT](https://github.com/SthephanShinkufag/Dollchan-Extension-Tools/raw/master/src/Dollchan_Extension_Tools.es6.user.js) ]** &mdash; Firefox 77+, Chrome 85+, Opera 71+
-- **[ [ES5 USERSCRIPT](https://raw.github.com/SthephanShinkufag/Dollchan-Extension-Tools/master/Dollchan_Extension_Tools.user.js) ]** &mdash; for old browsers
+- **[ [ESNEXT USERSCRIPT](https://github.com/qqrm/bettercuck/raw/master/src/Dollchan_Extension_Tools.es6.user.js) ]** &mdash; Firefox 77+, Chrome 85+, Opera 71+
+- **[ [ES5 USERSCRIPT](https://raw.github.com/qqrm/bettercuck/master/Dollchan_Extension_Tools.user.js) ]** &mdash; for old browsers
 - **[ [FIREFOX EXTENSION](https://addons.mozilla.org/firefox/addon/dollchan_extension/) ]**
 
 ---
 - **[ [English wiki](https://github.com/SthephanShinkufag/Dollchan-Extension-Tools/wiki/home-en) ]**
 - **[ [Russian wiki](https://github.com/SthephanShinkufag/Dollchan-Extension-Tools/wiki) ]**
 - **[ [Homepage](https://dollchan.net/extension/) ]**
-- **License:** © 2023 Dollchan Extension Tools Team.<br>See the [LICENSE file](https://github.com/SthephanShinkufag/Dollchan-Extension-Tools/blob/master/LICENSE) for license rights and limitations (MIT).
+- **Upstream:** [SthephanShinkufag/Dollchan-Extension-Tools](https://github.com/SthephanShinkufag/Dollchan-Extension-Tools)
+- **License:** © 2023 Dollchan Extension Tools Team.<br>See the [LICENSE file](https://github.com/qqrm/bettercuck/blob/master/LICENSE) for license rights and limitations (MIT).
 
 ---
 **Dollchan Extension** is the userscript and extension that combines various options & features, making you hang out on [imageboards](https://en.wikipedia.org/wiki/Imageboard) in an easier and more convenient way. If you have visited sites like [4chan.org](http://4chan.org/) or [2ch.hk](https://2ch.hk/), then you probably already heard about it.
@@ -38,6 +39,21 @@ It provides such functions:
 ... and many other features!
 
 Dollchan has both cross-browser and cross-board working scope. A list of supported sites includes all imageboards based on [Wakaba](https://wakaba.c3.cx/s/web/wakaba_kareha), [Kusaba](http://kusabax.cultnet.net/), [Tinyboard](https://github.com/savetheinternet/Tinyboard), [Vichan](https://github.com/vichan-devel/vichan), [TinyIB](https://github.com/tslocum/TinyIB), [LynxChan](https://gitgud.io/LynxChan/LynxChan), [FoolFuuka](https://github.com/FoolCode/FoolFuuka), their derivatives, or any other board engine that generates a html source parsable by the Dollchan, implying no critical changes were made by board maintainers.
+
+### Better hiding in this fork
+
+- **Hide exact text matches** adds a persistent board-wide `#texact` rule after normalizing case,
+  Unicode width, and whitespace.
+- **Hide similar text** adds a persistent board-wide `#tmatch` rule. It uses conservative offline lexical
+  similarity, normalizes reply numbers and URLs, and does not send post text to a service.
+- **Hide by similar images** now stores a 64-bit perceptual difference hash and allows up to eight differing
+  bits, making it resistant to resizing and mild recompression. Legacy numeric `#ihash(...)` rules remain valid.
+- Rules added with these menu actions use `[board]` scope even when they are created from inside a thread.
+- The hotkey editor accepts multiple alternatives per command. Focus a command and press each desired key;
+  press Delete to clear its list before replacing shortcuts.
+
+Automatic hiding based only on a post having fewer than five words is intentionally not enabled because it
+would hide many legitimate short replies.
 
 ---
 ### Compilation:
@@ -95,4 +111,3 @@ where `XXX` is the name of your device (it will be displayed if you enter `XXX` 
 - ETH: `0xffa96732ae8df25c34444c70c0d59c752a47aafa`
 - Mastercard: `5375411208220306`
 - [Donate online (UAH)](https://send.monobank.ua/jar/A7Saf6YAaz)
-

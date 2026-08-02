@@ -468,24 +468,25 @@ class AbstractPost {
 			return;
 		}
 		case 'hide-imgn':
-			await Spells.addSpell(3 /* #imgn */, `/${ escapeRegExp(this.images.firstAttach.name) }/`, false);
+			await Spells.addSpell(3 /* #imgn */, `/${ escapeRegExp(this.images.firstAttach.name) }/`, false,
+				[aib.b, false]);
 			return;
 		case 'hide-ihash': {
-			const hash = await ImagesHashStorage.getHash(this.images.firstAttach);
+			const hash = await ImagesHashStorage.getPerceptualHash(this.images.firstAttach);
 			if(hash !== -1) {
-				await Spells.addSpell(4 /* #ihash */, hash, false);
+				await Spells.addSpell(4 /* #ihash */, `p:${ hash }`, false, [aib.b, false]);
 			}
 			return;
 		}
 		case 'hide-noimg': await Spells.addSpell(0x108 /* (#all & !#img) */, '', true); return;
 		case 'hide-post': this.setUserVisib(!this.isHidden); break;
-		case 'hide-text': {
-			const words = Post.getWrds(this.text);
-			for(let post = Thread.first.op; post; post = post.next) {
-				Post.findSameText(num, !isHide, words, post);
-			}
+		case 'hide-texact':
+			await Spells.addSpell(19 /* #texact */, normalizePostText(this.text), false, [aib.b, false]);
 			return;
-		}
+		case 'hide-text':
+			await Spells.addSpell(20 /* #tmatch */, normalizePostText(this.text, true), false,
+				[aib.b, false]);
+			return;
 		case 'hide-notext': await Spells.addSpell(0x10B /* (#all & !#tlen) */, '', true); return;
 		case 'hide-refs':
 			this.ref.toggleRef(isHide, true);
@@ -604,49 +605,6 @@ class Post extends AbstractPost {
 			'<svg class="de-btn-reply"><use xlink:href="#de-symbol-post-reply"/></svg>' + (isOp ?
 			(noExpThr ? '' : '<svg class="de-btn-expthr"><use xlink:href="#de-symbol-post-expthr"/></svg>') +
 				'<svg class="de-btn-fav"><use xlink:href="#de-symbol-post-fav"/></svg>' : '');
-	}
-	static findSameText(pNum, isHidden, words, curPost) {
-		const curWords = Post.getWrds(curPost.text);
-		const len = curWords.length;
-		let i = words.length;
-		const olen = i;
-		let _olen = i;
-		let n = 0;
-		if(len < olen * 0.4 || len > olen * 3) {
-			return;
-		}
-		while(i--) {
-			if(olen > 6 && words[i].length < 3) {
-				_olen--;
-				continue;
-			}
-			let j = len;
-			while(j--) {
-				if(curWords[j] === words[i] || words[i].match(/>>\d+/) && curWords[j].match(/>>\d+/)) {
-					n++;
-				}
-			}
-		}
-		if(n < _olen * 0.4 || len > _olen * 3) {
-			return;
-		}
-		if(isHidden) {
-			if(curPost.spellHidden) {
-				Post.Note.reset();
-			} else {
-				curPost.setVisib(false);
-			}
-			if(curPost.userToggled) {
-				HiddenPosts.removeStorage(curPost.num);
-				curPost.userToggled = false;
-			}
-		} else {
-			curPost.setUserVisib(true, true, 'similar to >>' + pNum);
-		}
-		return false;
-	}
-	static getWrds(text) {
-		return text.replace(/\s+/g, ' ').replace(/[^a-zа-яё ]/ig, '').trim().substring(0, 800).split(' ');
 	}
 	static hideContent(headerEl, btnHide, isUser, isHide) {
 		if(!isHide) {
@@ -916,7 +874,7 @@ class Post extends AbstractPost {
 			this.posterTrip ? item('trip') : '' }${
 			this.posterUid ? item('uid') : '' }${
 			this.images.hasAttachments ? item('img') + item('imgn') + item('ihash') : item('noimg') }${
-			this.text ? item('text') : item('notext') }${
+			this.text ? item('texact') + item('text') : item('notext') }${
 			!Cfg.hideRefPsts && this.ref.hasMap ? item('refs') : '' }${
 			item('refsonly') }`;
 	}

@@ -41,7 +41,7 @@ const Spells = Object.create({
 	get names() {
 		return [
 			'words', 'exp', 'exph', 'imgn', 'ihash', 'subj', 'name', 'trip', 'img', 'sage', 'op', 'tlen',
-			'all', 'video', 'wipe', 'num', 'vauthor', '//', 'uid'
+			'all', 'video', 'wipe', 'num', 'vauthor', '//', 'uid', 'texact', 'tmatch'
 		];
 	},
 	get needArg() {
@@ -49,7 +49,8 @@ const Spells = Object.create({
 			/* words */ true, /* exp */ true, /* exph */ true, /* imgn */ true, /* ihash */ true,
 			/* subj */ false, /* name */ false, /* trip */ false, /* img */ false, /* sage */ false,
 			/* op */ false, /* tlen */ false, /* all */ false, /* video */ false, /* wipe */ false,
-			/* num */ true, /* vauthor */ true, /* // comment */ false, /* uid */ true
+			/* num */ true, /* vauthor */ true, /* // comment */ false, /* uid */ true,
+			/* texact */ true, /* tmatch */ true
 		];
 	},
 	get outreps() {
@@ -60,7 +61,7 @@ const Spells = Object.create({
 		this._initSpells();
 		return this.reps;
 	},
-	async addSpell(type, arg, isNeg) {
+	async addSpell(type, arg, isNeg, customScope) {
 		const inputEl = $id('de-spell-txt');
 		const value = inputEl?.value;
 		const checkboxEl = $q('input[info="hideBySpell"]');
@@ -74,7 +75,9 @@ const Spells = Object.create({
 			}
 			let idx;
 			let isAdded = true;
-			const scope = aib.t ? [aib.b, aib.t] : null;
+			const scope = typeof customScope === 'undefined' ?
+				aib.t ? [aib.b, aib.t] : null :
+				customScope;
 			if(spells[1]) {
 				const sScope = String(scope);
 				const sArg = String(arg);
@@ -203,6 +206,8 @@ const Spells = Object.create({
 		case 6: // #name
 		case 7: // #trip
 		case 18: // #uid
+		case 19: // #texact
+		case 20: // #tmatch
 		case 16: return `${ spell }(${ val.replace(/([)\\])/g, '\\$1').replace(/\n/g, '\\n') })`; // #vauthor
 		case 17: return '//' + String(val); // comment
 		default: return `${ spell }(${ String(val) })`;
@@ -817,6 +822,8 @@ class SpellsCodegen {
 		case 12: // #all
 		case 16: // #vauthor
 		case 18: // #uid
+		case 19: // #texact
+		case 20: // #tmatch
 			m = SpellsCodegen._getText(str, true);
 			if(m) {
 				return [i + m[0], [spellType, spellIdx === 0 ? m[1].toLowerCase() : m[1], scope]];
@@ -833,9 +840,9 @@ class SpellsCodegen {
 			}
 			break;
 		case 4: // #ihash
-			m = str.match(/^\((\d+)\)/);
-			if(!isNaN(+m[1])) {
-				return [i + m[0].length, [spellType, +m[1], scope]];
+			m = str.match(/^\((?:(\d+)|(p:[0-9a-f]{16}))\)/i);
+			if(m) {
+				return [i + m[0].length, [spellType, m[1] ? +m[1] : m[2].toLowerCase(), scope]];
 			}
 			break;
 		case 8: // #img
@@ -1112,6 +1119,8 @@ class SpellsInterpreter {
 			return this._num(val);
 		case 16: return this._vauthor(val);
 		case 18: return this._uid(val);
+		case 19: return this._texact(val);
+		case 20: return this._tmatch(val);
 		}
 	}
 
@@ -1124,13 +1133,30 @@ class SpellsInterpreter {
 	_exph(val) {
 		return val.test(this._post.html);
 	}
-	async _ihash(val) {
+	_ihash(val) {
+		const isLegacy = typeof val === 'number';
+		const cacheName = isLegacy ? '_legacyImageHashes' : '_perceptualImageHashes';
+		if(this[cacheName]) {
+			return this._matchesImageHash(this[cacheName], val, isLegacy);
+		}
+		const hashes = [];
 		for(const image of this._post.images) {
-			if((image instanceof AttachedImage) && await ImagesHashStorage.getHash(image) === val) {
-				return true;
+			if(image instanceof AttachedImage) {
+				hashes.push(isLegacy ? ImagesHashStorage.getHash(image) :
+					ImagesHashStorage.getPerceptualHash(image));
 			}
 		}
-		return false;
+		return Promise.all(hashes).then(values => {
+			this[cacheName] = values;
+			return this._matchesImageHash(values, val, isLegacy);
+		});
+	}
+	_matchesImageHash(hashes, val, isLegacy) {
+		if(isLegacy) {
+			return hashes.includes(val);
+		}
+		const expected = val.substr(2);
+		return hashes.some(hash => getPerceptualHashDistance(hash, expected) <= 8);
 	}
 	_img(val) {
 		const { images } = this._post;
@@ -1206,6 +1232,15 @@ class SpellsInterpreter {
 	_tlen(val) {
 		const text = this._post.text.replace(/\s+(?=\s)|\n/g, '');
 		return !val ? !!text : SpellsInterpreter._tlenNumHelper(val, text.length);
+	}
+	_texact(val) {
+		if(!this._normalizedText) {
+			this._normalizedText = normalizePostText(this._post.text);
+		}
+		return this._normalizedText === val;
+	}
+	_tmatch(val) {
+		return isPostTextSimilar(val, this._post.text);
 	}
 	_trip(val) {
 		const pTrip = this._post.posterTrip;

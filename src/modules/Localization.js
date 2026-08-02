@@ -787,6 +787,10 @@ const Lng = {
 			'Скрыть схожий текст',
 			'Hide similar text',
 			'Сховати схожий текст'],
+		texact: [
+			'Скрывать точное совпадение текста',
+			'Hide exact text matches',
+			'Ховати точний збіг тексту'],
 		refs: [
 			'Скрыть с ответами',
 			'Hide with replies',
@@ -886,6 +890,10 @@ const Lng = {
 		'Помилка: не можу завантажити на saucenao.com'],
 
 	// Hotkeys editor
+	hotKeyEditHelp: [
+		'Нажимайте несколько клавиш, чтобы добавить альтернативы. Delete очищает команду.',
+		'Press multiple keys to add alternatives. Delete clears the command.',
+		'Натискайте кілька клавіш, щоб додати альтернативи. Delete очищає команду.'],
 	hotKeyEdit: [[
 		// Ru
 		'%l%i24 – предыдущая страница/картинка%/l',
