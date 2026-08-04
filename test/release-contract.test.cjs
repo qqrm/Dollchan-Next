@@ -10,6 +10,7 @@ test('Firefox manifest has an independent AMO identity and consent declaration',
 	const manifest = JSON.parse(read('extension/v2/manifest.json'));
 	assert.equal(manifest.name, 'Dollchan Next');
 	assert.equal(manifest.version, '1.0.0');
+	assert.equal(manifest.author, 'qqrm');
 	assert.equal(manifest.browser_specific_settings.gecko.id, 'dollchan-next@qqrm.github.io');
 	assert.equal(manifest.browser_specific_settings.gecko.strict_min_version, '140.0');
 	assert.equal(manifest.browser_specific_settings.gecko_android.strict_min_version, '142.0');

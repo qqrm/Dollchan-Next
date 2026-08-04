@@ -1,6 +1,7 @@
 {
 	"name": "Dollchan Next",
 	"version": "1.0.0",
+	"author": "qqrm",
 	"description": "A modern, privacy-conscious imageboard companion for Firefox and Zen.",
 	"homepage_url": "https://github.com/qqrm/Dollchan-Next",
 	"short_name": "Dollchan Next",
