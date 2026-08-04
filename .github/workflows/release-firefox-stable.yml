@@ -13,8 +13,8 @@ jobs:
     timeout-minutes: 30
     environment: amo-production
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -38,7 +38,7 @@ jobs:
             --upload-source-code dist/source/dollchan-next-source.zip \
             --approval-timeout 0 \
             --timeout 900000
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: amo-submission-${{ github.ref_name }}
           path: |
