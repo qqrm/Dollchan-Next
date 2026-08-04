@@ -31,8 +31,15 @@ function setStored(id, value) {
 }
 
 function setIcon(enabled) {
-	chrome.browserAction.setIcon({ path: `icons/logo-32-light${ enabled ? '' : '-disabled' }.png` });
-	chrome.browserAction.setTitle({ title: `Dollchan Extension ${ enabled ? '(enabled)' : '(disabled)' }` });
+	const name = `dn${ enabled ? '' : '-disabled' }`;
+	chrome.browserAction.setIcon({
+		path: {
+			16: `icons/${ name }-16.png`,
+			32: `icons/${ name }-32.png`,
+			48: `icons/${ name }-48.png`
+		}
+	});
+	chrome.browserAction.setTitle({ title: `Dollchan Next — ${ enabled ? 'enabled' : 'disabled' }` });
 }
 
 async function runScript(tabId, url, frameId = null) {
@@ -50,8 +57,8 @@ async function runScript(tabId, url, frameId = null) {
 	for(let i = 0, len = inc.length; i < len; ++i) {
 		if(inc[i] && new RegExp(inc[i].replace(/\*/g, '.*?')).test(url)) {
 			const options = {
-				file  : 'Dollchan_Extension_Tools.es6.user.js',
-				runAt : 'document_start'
+				file : 'Dollchan_Next.js',
+				runAt: 'document_start'
 			};
 			if(frameId !== null) {
 				options.frameId = frameId;
@@ -88,7 +95,7 @@ chrome.webNavigation.onCommitted.addListener(details => {
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	switch(request['de-messsage']) {
-	case 'toggleDollchan': // Conversation with menu.js
+	case 'toggleDollchan': // Legacy message name retained for compatibility.
 		setStored('DESU_enabled', isEnabled = !isEnabled);
 		setIcon(isEnabled);
 		if(isEnabled) {
@@ -97,6 +104,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 				tabs => runScript(tabs[0].id, tabs[0].url));
 		}
 		sendResponse({ answer: isEnabled });
+		break;
+	case 'getDollchanNextStatus':
+		sendResponse({ enabled: isEnabled });
 		break;
 	case 'corsRequest': { // Chrome-extension: avoid CORS in content-script.
 		// Getting data from content-script and sending a CORS request.
@@ -119,7 +129,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 			case 'arraybuffer':
 			case 'blob': { // Converting arraybuffer/blob from the request response
 				// to text data for sending to the content-script
-				const arr =  new Uint8Array(await res.arrayBuffer());
+				const arr = new Uint8Array(await res.arrayBuffer());
 				answer = '';
 				for(let i = 0, len = arr.length; i < len; ++i) {
 					answer += String.fromCharCode(arr[i]);

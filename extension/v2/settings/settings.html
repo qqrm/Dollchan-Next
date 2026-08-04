@@ -1,42 +1,73 @@
-<!DOCTYPE html>
-
-<html>
+<!doctype html>
+<html lang="en">
 <head>
 	<meta charset="utf-8">
-	<link rel="stylesheet" href="settings.css"/>
-	<script type="text/javascript" src="settings.js"></script>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="../shared/theme.css">
+	<link rel="stylesheet" href="settings.css">
+	<script src="settings.js" defer></script>
+	<title>Dollchan Next — Settings</title>
 </head>
 <body>
-	<div id="tabs">
-		<img id="logo" src="../icons/logo-32.png">
-		<div class="tab active" id="tab-scope">Scope</div>
-		<div class="tab" id="tab-info">Info</div>
-	</div>
-	<div class="content active" id="content-scope">
-		<div class="content-block">
-			Includes<br>
-			<textarea id="scope-includes-value"></textarea>
-		</div>
-		<div class="content-block">
-			Exludes<br>
-			<textarea id="scope-excludes-value"></textarea>
-		</div>
-		<div class="content-block">
-			<button id="save-scope">Save</button>
-		</div>
-		<div class="content-block">
-			Example:<br>
-			<code>*://2ch.hk/*</code><br>
-			<code>*4chan.org/*</code><br>
-			<code>http://boards.4channel.org/*</code><br>
-			<code>*://8ch.net/test/*</code><br>
-			<code>...</code>
-		</div>
-	</div>
-	<div class="content" id="content-info">
-		<div class="content-block">
-			Info...
-		</div>
+	<div class="dn-shell">
+		<header class="dn-topbar">
+			<div class="dn-brand"><img src="../icons/dn.svg" alt=""><div><h1>Dollchan Next</h1><p>Settings, privacy and migration</p></div></div>
+			<div id="save-state" class="dn-muted" role="status" aria-live="polite">Ready</div>
+		</header>
+		<nav class="dn-nav" aria-label="Settings sections">
+			<button class="dn-nav-item" type="button" data-section="scope" aria-current="page">Scope</button>
+			<button class="dn-nav-item" type="button" data-section="privacy">Privacy</button>
+			<button class="dn-nav-item" type="button" data-section="data">Import &amp; export</button>
+			<button class="dn-nav-item" type="button" data-section="about">About</button>
+		</nav>
+		<main>
+			<section id="section-scope" class="dn-section" data-visible="true">
+				<div class="dn-card dn-section-card">
+					<h2>Site scope</h2>
+					<p class="dn-muted">One wildcard pattern per line. Excludes take precedence.</p>
+					<label>Include patterns<textarea id="scope-includes" rows="7" spellcheck="false" placeholder="*"></textarea></label>
+					<label>Exclude patterns<textarea id="scope-excludes" rows="7" spellcheck="false" placeholder="*://example.org/*"></textarea></label>
+					<div class="dn-actions"><button id="save-scope" class="dn-primary" type="button">Save scope</button></div>
+				</div>
+			</section>
+			<section id="section-privacy" class="dn-section">
+				<div class="dn-card dn-section-card">
+					<h2>Privacy</h2>
+					<p>Dollchan Next has no telemetry. Core imageboard features exchange content only with the board you use.</p>
+					<label class="dn-consent">
+						<input id="external-services" type="checkbox">
+						<span><strong>External media services</strong><small>Allow optional YouTube/Vimeo metadata and image-search actions. Providers receive the selected media URL or public video ID.</small></span>
+					</label>
+					<p class="dn-note">This is off by default. Reload an imageboard tab after changing it.</p>
+					<label>Interface theme<select id="theme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
+					<div class="dn-actions"><button id="save-privacy" class="dn-primary" type="button">Save privacy settings</button></div>
+				</div>
+			</section>
+			<section id="section-data" class="dn-section">
+				<div class="dn-card dn-section-card">
+					<h2>Move from Dollchan</h2>
+					<p class="dn-muted">Import a Dollchan JSON backup. Settings, exact/fuzzy rules, hotkeys and favourites remain local to this browser profile.</p>
+					<label class="dn-file">Choose backup<input id="import-file" type="file" accept="application/json,.json"></label>
+					<div id="import-preview" class="dn-preview" hidden>
+						<strong>Import preview</strong><pre id="import-summary"></pre>
+						<button id="apply-import" class="dn-primary" type="button" disabled>Import selected backup</button>
+					</div>
+					<hr>
+					<h3>Backup Dollchan Next</h3>
+					<p class="dn-muted">Exports extension settings, hotkeys, favourites, scope and privacy choices.</p>
+					<button id="export-data" type="button">Download JSON backup</button>
+				</div>
+			</section>
+			<section id="section-about" class="dn-section">
+				<div class="dn-card dn-section-card">
+					<h2>About Dollchan Next</h2>
+					<p>An independent, modernised fork of Dollchan Extension Tools maintained by qqrm.</p>
+					<dl><dt>Version</dt><dd>{{VERSION}}</dd><dt>Extension ID</dt><dd><code>dollchan-next@qqrm.github.io</code></dd><dt>License</dt><dd>MIT</dd></dl>
+					<div class="dn-links"><a href="https://github.com/qqrm/Dollchan-Next" target="_blank" rel="noreferrer">Source code</a><a href="https://github.com/qqrm/Dollchan-Next/issues" target="_blank" rel="noreferrer">Report an issue</a></div>
+					<p class="dn-note">The original Dollchan copyright and MIT permission notice are preserved in the distributed LICENSE and NOTICE files.</p>
+				</div>
+			</section>
+		</main>
 	</div>
 </body>
 </html>

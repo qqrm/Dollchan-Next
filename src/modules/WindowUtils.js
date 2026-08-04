@@ -149,7 +149,7 @@ function toggleWindow(name, isUpdate, data, noAnim) {
 		winEl = $aBegin(Panel.mainEl, `<div id="de-win-${ name }" class="${ winAttr }; display: none;">
 			<div class="de-win-head">
 				<span class="de-win-title">
-					${ name === 'cfg' ? 'Dollchan Extension Tools' : Lng.panelBtn[name][lang] }
+					${ name === 'cfg' ? 'Dollchan Next' : Lng.panelBtn[name][lang] }
 				</span>
 				<span class="de-win-buttons">
 					<svg class="de-win-btn-toggle"><use xlink:href="#de-symbol-win-arrow"/></svg>

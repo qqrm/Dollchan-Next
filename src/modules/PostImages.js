@@ -997,9 +997,17 @@ const ImagesHashStorage = Object.create({
 		Object.defineProperty(this, 'getHash', { value });
 		return value;
 	},
+	get getPerceptualHash() {
+		const value = this._getPerceptualHashHelper.bind(this);
+		Object.defineProperty(this, 'getPerceptualHash', { value });
+		return value;
+	},
 	endFn() {
 		if($hasProp(this, '_storage')) {
 			sesStorage['de-imageshash'] = JSON.stringify(this._storage);
+		}
+		if($hasProp(this, '_perceptualStorage')) {
+			sesStorage['de-imagesphash'] = JSON.stringify(this._perceptualStorage);
 		}
 		if($hasProp(this, '_workers')) {
 			this._workers.clearWorkers();
@@ -1021,6 +1029,17 @@ const ImagesHashStorage = Object.create({
 			value = {};
 		}
 		Object.defineProperty(this, '_storage', { value });
+		return value;
+	},
+	get _perceptualStorage() {
+		let value = null;
+		try {
+			value = JSON.parse(sesStorage['de-imagesphash']);
+		} catch(err) {}
+		if(!value) {
+			value = {};
+		}
+		Object.defineProperty(this, '_perceptualStorage', { value });
 		return value;
 	},
 	get _workers() {
@@ -1059,21 +1078,44 @@ const ImagesHashStorage = Object.create({
 				hash &= ~g;
 			}
 		}
-		return { hash };
-	},
-	async _getHashHelper({ el, src }) {
-		if(src in this._storage) {
-			return this._storage[src];
+		const sample = (x, y) => {
+			let temp = y / 7 * (oldh - 1);
+			const top = Math.min(temp | 0, oldh - 2);
+			const vertical = temp - top;
+			temp = x / 8 * (oldw - 1);
+			const left = Math.min(temp | 0, oldw - 2);
+			const horizontal = temp - left;
+			return buf[top * oldw + left] * ((1 - horizontal) * (1 - vertical)) +
+				buf[top * oldw + left + 1] * (horizontal * (1 - vertical)) +
+				buf[(top + 1) * oldw + left + 1] * (horizontal * vertical) +
+				buf[(top + 1) * oldw + left] * ((1 - horizontal) * vertical);
+		};
+		let perceptualHash = '';
+		let bits = 0;
+		let nibble = 0;
+		for(let y = 0; y < 8; ++y) {
+			let previous = sample(0, y);
+			for(let x = 1; x < 9; ++x) {
+				const current = sample(x, y);
+				nibble = (nibble << 1) | (previous > current ? 1 : 0);
+				previous = current;
+				if(++bits === 4) {
+					perceptualHash += nibble.toString(16);
+					bits = 0;
+					nibble = 0;
+				}
+			}
 		}
+		return { hash, perceptualHash };
+	},
+	async _getImageHashes({ el, src }) {
 		if(!el.complete) {
 			await new Promise(resolve => el.addEventListener('load', () => resolve()));
 		}
 		el.removeAttribute('loading');
 		if(el.naturalWidth + el.naturalHeight === 0) {
-			return -1;
+			return null;
 		}
-		let data;
-		let val = -1;
 		const { naturalWidth: w, naturalHeight: h } = el;
 		const cnv = this._canvas;
 		cnv.width = w;
@@ -1081,15 +1123,34 @@ const ImagesHashStorage = Object.create({
 		const ctx = cnv.getContext('2d');
 		ctx.drawImage(el, 0, 0);
 		const { buffer } = ctx.getImageData(0, 0, w, h).data;
-		if(buffer) {
-			data = await new Promise(resolve =>
-				this._workers.runWorker([buffer, w, h], [buffer], val => resolve(val)));
-			if(data && ('hash' in data)) {
-				val = data.hash;
+		if(!buffer) {
+			return null;
+		}
+		const data = await new Promise(resolve =>
+			this._workers.runWorker([buffer, w, h], [buffer], value => resolve(value)));
+		if(data) {
+			if('hash' in data) {
+				this._storage[src] = data.hash;
+			}
+			if('perceptualHash' in data) {
+				this._perceptualStorage[src] = data.perceptualHash;
 			}
 		}
-		this._storage[src] = val;
-		return val;
+		return data;
+	},
+	async _getHashHelper({ el, src }) {
+		if(src in this._storage) {
+			return this._storage[src];
+		}
+		const data = await this._getImageHashes({ el, src });
+		return data && ('hash' in data) ? data.hash : -1;
+	},
+	async _getPerceptualHashHelper({ el, src }) {
+		if(src in this._perceptualStorage) {
+			return this._perceptualStorage[src];
+		}
+		const data = await this._getImageHashes({ el, src });
+		return data && ('perceptualHash' in data) ? data.perceptualHash : -1;
 	}
 });
 

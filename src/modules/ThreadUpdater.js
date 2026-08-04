@@ -42,7 +42,8 @@ function initThreadUpdater(title, enableUpdate) {
 		get _el() {
 			const value = doc.createElement('audio');
 			value.setAttribute('preload', 'auto');
-			value.src = gitRaw + 'signal.ogg';
+			value.src = nav.isWebExtension ? chrome.runtime.getURL('signal.ogg') :
+				repoUrl + 'raw/master/signal.ogg';
 			Object.defineProperty(this, '_el', { value });
 			return value;
 		}

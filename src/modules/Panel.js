@@ -11,7 +11,7 @@ const Panel = Object.create({
 		this.mainEl = $bBegin(formEl, `<div id="de-main-container" class="de-runned-${
 			nav.isInPage ? 'inpage' : 'userscript' }">
 			<div id="de-panel">
-				<div id="de-panel-btn-logo" class="de-panel-btn" title="${ Lng.panelBtn.attach[lang] }">
+				<div id="de-panel-btn-logo" class="de-panel-btn" title="Dollchan Next">
 					<svg class="de-panel-svg">
 						<use xlink:href="#de-symbol-panel-logo"/>
 					</svg>

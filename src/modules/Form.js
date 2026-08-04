@@ -429,7 +429,7 @@ class PostForm {
 			if(Spells.outreps) {
 				val = Spells.outReplace(val);
 			}
-			if(this.tNum && pByNum.get(this.tNum).subj === 'Dollchan Extension Tools') {
+			if(this.tNum && ['Dollchan Extension Tools', 'Dollchan Next'].includes(pByNum.get(this.tNum).subj)) {
 				const temp = `\n\n${ PostForm._wrapText(aib.markupTags[5],
 					`${ '-'.repeat(50) }\n${ nav.userAgent }\nv${ version }.${ commit }${
 						nav.isESNext ? '.es6' : '' } [${ nav.scriptHandler }]`

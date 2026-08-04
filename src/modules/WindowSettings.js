@@ -417,13 +417,9 @@ const CfgWindow = {
 						e => el.addEventListener(e, fn, true));
 				});
 				break;
-			case 'de-cfg-button-updnow':
-				$popup('updavail', Lng.loading[lang], true);
-				getStoredObj('DESU_Config')
-					.then(data => checkForUpdates(true, data.lastUpd))
-					.then(html => $popup('updavail', html), Function.prototype);
+			case 'de-cfg-button-options':
+				chrome.runtime.openOptionsPage();
 				break;
-			case 'de-cfg-button-donate': showDonateMsg(); break;
 			case 'de-cfg-button-debug': {
 				const perf = {};
 				const arr = Logger.getLogData(true);
@@ -754,7 +750,7 @@ const CfgWindow = {
 	// "Common" tab
 	_getCfgCommon() {
 		return `<div id="de-cfg-common" class="de-cfg-unvis">
-			${ this._getSel('scriptStyle') }<br>
+			${ nav.isWebExtension ? '<input type="button" id="de-cfg-button-options" value="Dollchan Next settings & privacy"><br>' : '' }
 			${ this._getBox('userCSS') }
 			<a href="${ gitWiki }css-tricks" class="de-abtn" target="_blank">[?]</a><br>
 			${ 'animation' in doc.body.style ? this._getBox('animation') + '<br>' : '' }
@@ -784,10 +780,8 @@ const CfgWindow = {
 		], false);
 		return `<div id="de-cfg-info" class="de-cfg-unvis">
 			<div style="padding-bottom: 10px;">
-				<a href="${ gitWiki }versions" target="_blank">v${ version }.${ commit }` +
-					`${ nav.isESNext ? '.es6' : '' }</a> |
-				<a href="https://dollchan.net/extension/" target="_blank">Homepage</a> |
-				<a href="${ gitWiki }${ lang === 1 ? 'home-en/' : '' }" target="_blank">Github</a> |
+				<a href="${ repoUrl }" target="_blank">Dollchan Next v${ version }.${ commit }</a> |
+				<a href="${ repoUrl }issues" target="_blank">Github</a> |
 				<input type="button" id="de-cfg-button-debug" value="` +
 					`${ Lng.debug[lang] }" title="${ Lng.infoDebug[lang] }">
 			</div>
@@ -795,14 +789,7 @@ const CfgWindow = {
 				<div id="de-info-stats">${ statsTable }</div>
 				<div id="de-info-log">${ this._getInfoTable(Logger.getLogData(false), true) }</div>
 			</div>
-			${ !nav.hasWebStorage && !localData || nav.hasGMXHR ? `
-				${ this._getSel('updDollchan') }
-				<div style="margin-top: 3px; text-align: center;">&gt;&gt;
-					<input type="button" id="de-cfg-button-updnow" value="${ Lng.checkNow[lang] }">
-					<input type="button" id="de-cfg-button-donate" value="Donate">
-				&lt;&lt;</div>` : `<div style="margin-top: 3px; text-align: center;">&gt;&gt;
-					<input type="button" id="de-cfg-button-donate" value="Donate">
-				&lt;&lt;</div>` }
+			<p>Dollchan Next does not include donation prompts or a separate userscript updater.</p>
 		</div>`;
 	},
 

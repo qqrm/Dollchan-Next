@@ -127,8 +127,8 @@ function addSVGIcons() {
 
 	<!-- MAIN PANEL -->
 	<symbol viewBox="0 0 25 25" id="de-symbol-panel-logo">
-		<path class="de-svg-fill" d="M22 5h-10v16h4v-14h6z"/>
-		<path class="de-svg-stroke" stroke-width="3" d="M22 20.5H12c-2.8 0-5.7 0-5.7-4s2.8-4 5.7-4H21"/>
+		<path class="de-svg-fill" d="M2 4h8c6 0 10 3.4 10 8.5S16 21 10 21H2V4zm5 4v9h3c3 0 5-1.7 5-4.5S13 8 10 8H7z"/>
+		<path class="de-svg-stroke" stroke-width="2" d="M17 5v15M17 5l6 15M23 5v15"/>
 	</symbol>
 	<symbol viewBox="0 0 25 25" id="de-symbol-panel-cfg">
 		<circle class="de-svg-stroke" stroke-width="3" cx="12.5" cy="12.5" r="6"/>

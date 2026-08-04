@@ -479,19 +479,6 @@ const Lng = {
 			'Тему'],
 
 		// "Common" tab
-		scriptStyle: {
-			sel: [
-				['Gradient darkblue', 'Gradient blue', 'Solid grey', 'Transparent blue', 'Square dark',
-					'Gradient pink'],
-				['Gradient darkblue', 'Gradient blue', 'Solid grey', 'Transparent blue', 'Square dark',
-					'Gradient pink'],
-				['Gradient darkblue', 'Gradient blue', 'Solid grey', 'Transparent blue', 'Square dark',
-					'Gradient pink']],
-			txt: [
-				'Стиль Dollchan',
-				'Dollchan style',
-				'Стиль Dollchan']
-		},
 		userCSS: [
 			'Пользовательский CSS',
 			'User CSS',
@@ -559,17 +546,7 @@ const Lng = {
 		closePopups: [
 			'Автоматически закрывать уведомления',
 			'Close popups automatically',
-			'Автоматично закривати сповіщення'],
-		updDollchan: {
-			sel: [
-				['Откл.', 'Каждый день', 'Каждые 2 дня', 'Каждую неделю', 'Каждые 2 недели', 'Каждый месяц'],
-				['Disable', 'Every day', 'Every 2 days', 'Every week', 'Every 2 weeks', 'Every month'],
-				['Вимкн.', 'Щодня', 'Кожні 2 дні', 'Щотижня', 'Кожні 2 тижні', 'Щомісяця']],
-			txt: [
-				'Проверять обновления Dollchan',
-				'Check for Dollchan updates',
-				'Перевіряти оновлення Dollchan']
-		}
+			'Автоматично закривати сповіщення']
 	},
 
 	// Main panel buttons: tooltips
@@ -787,6 +764,10 @@ const Lng = {
 			'Скрыть схожий текст',
 			'Hide similar text',
 			'Сховати схожий текст'],
+		texact: [
+			'Скрывать точное совпадение текста',
+			'Hide exact text matches',
+			'Ховати точний збіг тексту'],
 		refs: [
 			'Скрыть с ответами',
 			'Hide with replies',
@@ -886,6 +867,10 @@ const Lng = {
 		'Помилка: не можу завантажити на saucenao.com'],
 
 	// Hotkeys editor
+	hotKeyEditHelp: [
+		'Нажимайте несколько клавиш, чтобы добавить альтернативы. Delete очищает команду.',
+		'Press multiple keys to add alternatives. Delete clears the command.',
+		'Натискайте кілька клавіш, щоб додати альтернативи. Delete очищає команду.'],
 	hotKeyEdit: [[
 		// Ru
 		'%l%i24 – предыдущая страница/картинка%/l',
@@ -1530,15 +1515,6 @@ const Lng = {
 		'Последний пост',
 		'Latest post',
 		'Останній допис'],
-	donateMsg: [
-		'<b>Спасибо за использование Dollchan Extension!</b><br>Вы можете поддержать проект пожертвованием',
-		'<b>Thank You for using Dollchan Extension!</b><br>You can support the project by donating',
-		'<b>Дякуємо за використання Dollchan Extension!</b><br>Ви можете підтримати проект пожертвою'],
-	donateOnline: [
-		'Онлайн донат (грн)',
-		'Donate online (UAH)',
-		'Онлайн донат (грн)'
-	],
 	firefoxAddon: [
 		'Firefox аддон</a> доступен!',
 		'Firefox add-on</a> is available!',

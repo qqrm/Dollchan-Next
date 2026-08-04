@@ -141,6 +141,94 @@ function strToRegExp(str, notGlobal) {
 	return new RegExp(str.substr(1, l - 1), notGlobal ? flags.replace('g', '') : flags);
 }
 
+// Normalizes post text for persistent exact/fuzzy hiding rules.
+function normalizePostText(text, fuzzy = false) {
+	let value = String(text).toLowerCase().replace(/ё/g, 'е');
+	if(value.normalize) {
+		value = value.normalize('NFKC');
+	}
+	if(fuzzy) {
+		value = value
+			.replace(/https?:\/\/[^\s]+/g, ' url ')
+			.replace(/>>\d+/g, ' ref ')
+			.replace(/[^a-zа-я0-9]+/gi, ' ');
+	}
+	return value.replace(/\s+/g, ' ').trim();
+}
+
+function getTextSimilarity(textA, textB) {
+	const a = normalizePostText(textA, true);
+	const b = normalizePostText(textB, true);
+	if(!a || !b) {
+		return 0;
+	}
+	if(a === b) {
+		return 1;
+	}
+	const makeGrams = text => {
+		const value = ` ${ text } `;
+		if(value.length <= 3) {
+			return [value];
+		}
+		const grams = [];
+		for(let i = 0; i <= value.length - 3; ++i) {
+			grams.push(value.substr(i, 3));
+		}
+		return grams;
+	};
+	const dice = (left, right) => {
+		const counts = new Map();
+		let matches = 0;
+		for(const item of left) {
+			counts.set(item, (counts.get(item) || 0) + 1);
+		}
+		for(const item of right) {
+			const count = counts.get(item) || 0;
+			if(count) {
+				matches++;
+				counts.set(item, count - 1);
+			}
+		}
+		return 2 * matches / (left.length + right.length);
+	};
+	const wordsA = a.split(' ');
+	const wordsB = b.split(' ');
+	const maxWords = Math.max(wordsA.length, wordsB.length);
+	const minWords = Math.min(wordsA.length, wordsB.length);
+	if(maxWords > minWords * 2) {
+		return 0;
+	}
+	const charScore = dice(makeGrams(a), makeGrams(b));
+	const wordScore = dice(wordsA, wordsB);
+	return charScore * 0.65 + wordScore * 0.35;
+}
+
+function isPostTextSimilar(textA, textB) {
+	const a = normalizePostText(textA, true);
+	const b = normalizePostText(textB, true);
+	if(!a || !b) {
+		return false;
+	}
+	if(a === b) {
+		return true;
+	}
+	const minWords = Math.min(a.split(' ').length, b.split(' ').length);
+	const threshold = minWords <= 2 ? 0.88 : minWords <= 5 ? 0.72 : 0.66;
+	return getTextSimilarity(a, b) >= threshold;
+}
+
+function getPerceptualHashDistance(hashA, hashB) {
+	if(!/^[0-9a-f]{16}$/i.test(hashA) || !/^[0-9a-f]{16}$/i.test(hashB)) {
+		return Infinity;
+	}
+	const bitCounts = [0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4];
+	let distance = 0;
+	for(let i = 0; i < 16; ++i) {
+		distance += bitCounts[parseInt(hashA[i], 16) ^ parseInt(hashB[i], 16)];
+	}
+	return distance;
+}
+
 // OTHER UTILS
 
 function pad2(i) {
