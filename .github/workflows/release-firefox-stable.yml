@@ -1,0 +1,48 @@
+name: Release Firefox stable
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  publish-amo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: amo-production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Validate release tag
+        run: test "${GITHUB_REF_NAME#v}" = "$(node -p "require('./package.json').version")"
+      - run: npm ci
+      - run: npm run verify
+      - run: npm run build:source
+      - name: Submit listed version to AMO
+        env:
+          AMO_API_KEY: ${{ secrets.JWT_ISSUER }}
+          AMO_API_SECRET: ${{ secrets.JWT_SECRET }}
+        run: |
+          npx web-ext sign \
+            --source-dir dist/firefox \
+            --artifacts-dir web-ext-artifacts \
+            --api-key "$AMO_API_KEY" \
+            --api-secret "$AMO_API_SECRET" \
+            --channel listed \
+            --amo-metadata amo-metadata.json \
+            --upload-source-code dist/source/dollchan-next-source.zip \
+            --approval-timeout 0 \
+            --timeout 900000
+      - uses: actions/upload-artifact@v4
+        with:
+          name: amo-submission-${{ github.ref_name }}
+          path: |
+            web-ext-artifacts
+            dist/source/dollchan-next-source.zip
+          if-no-files-found: warn
+          retention-days: 30

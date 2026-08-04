@@ -137,7 +137,7 @@ async function toggleCfg(id) {
 	await CfgSaver.save(id, +!Cfg[id]);
 }
 
-// Config initialization, checking for Dollchan update.
+// Config initialization and storage schema migration.
 async function readCfg() {
 	// Detect built-in-page Dollchan copy and block it
 	if(!nav.isInPage) {
@@ -155,7 +155,12 @@ async function readCfg() {
 	}
 
 	let obj;
-	const val = await getStoredObj('DESU_Config');
+	const [val, privacy, storedTheme] = await Promise.all([
+		getStoredObj('DESU_Config'),
+		getStoredObj('DESU_Privacy'),
+		getStored('DN_theme')
+	]);
+	val.schemaVersion = 1;
 	if(!(aib.domain in val) || $isEmpty(obj = val[aib.domain])) {
 		const isGlobal = nav.hasGlobalStorage && !!val.global;
 		obj = isGlobal ? val.global : {};
@@ -170,6 +175,23 @@ async function readCfg() {
 		browserLang.startsWith('en') ? 1 :
 		browserLang.startsWith('uk') ? 2 : defaultCfg.language;
 	Cfg = Object.assign(Object.create(defaultCfg), obj);
+	const validThemes = ['system', 'light', 'dark'];
+	const migratedTheme = $hasProp(obj, 'theme') && validThemes.includes(obj.theme) ? obj.theme :
+		obj.scriptStyle === 4 ? 'dark' : 'system';
+	Cfg.theme = validThemes.includes(storedTheme) ? storedTheme : migratedTheme;
+	if(!validThemes.includes(storedTheme)) {
+		setStored('DN_theme', Cfg.theme);
+	}
+	Cfg.externalServices = +Boolean(privacy.externalServices);
+	if(!Cfg.externalServices) {
+		Cfg.YTubeTitles = 0;
+		Cfg.imgSrcBtns = 0;
+		Cfg.addVimeo = 0;
+		Cfg.addVocaroo = 0;
+		if(Cfg.embedYTube === 1) {
+			Cfg.embedYTube = 2;
+		}
+	}
 	if(!Cfg.timeOffset) {
 		Cfg.timeOffset = '+0';
 	}
@@ -185,9 +207,6 @@ async function readCfg() {
 	if(!('Notification' in deWindow)) {
 		Cfg.desktNotif = 0;
 	}
-	if(nav.isWebExtension) {
-		Cfg.updDollchan = 0;
-	}
 	if(Cfg.updThrDelay < 10) {
 		Cfg.updThrDelay = 10;
 	}
@@ -202,24 +221,8 @@ async function readCfg() {
 	}
 	lang = Cfg.language;
 	val[aib.domain] = Cfg;
-	if(val.commit !== commit && !localData) {
-		if(doc.readyState === 'loading') {
-			doc.addEventListener('DOMContentLoaded', () => setTimeout(showDonateMsg, 1e3));
-		} else {
-			setTimeout(showDonateMsg, 1e3);
-		}
-		val.commit = commit;
-	}
+	val.commit = commit;
 	setStored('DESU_Config', JSON.stringify(val));
-	if(Cfg.updDollchan && !localData) {
-		checkForUpdates(false, val.lastUpd).then(html => {
-			if(doc.readyState === 'loading') {
-				doc.addEventListener('DOMContentLoaded', () => $popup('updavail', html));
-			} else {
-				$popup('updavail', html);
-			}
-		}, Function.prototype);
-	}
 }
 
 // == POSTS DATA =============================================================================================

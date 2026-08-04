@@ -41,6 +41,26 @@ async function runMain(checkDomains, dataPromise) {
 	if(!doc.body || !aib && !(aib = getImageBoard(checkDomains, true))) {
 		return;
 	}
+	if($id('de-main-container')) {
+		const warning = doc.createElement('div');
+		warning.id = 'dn-conflict-warning';
+		warning.textContent = 'Dollchan Next detected another active Dollchan copy. Disable the original extension and reload this page.';
+		Object.assign(warning.style, {
+			position: 'fixed',
+			top: '12px',
+			right: '12px',
+			zIndex: '2147483647',
+			maxWidth: '380px',
+			padding: '12px 16px',
+			border: '1px solid #ff7b8c',
+			borderRadius: '10px',
+			color: '#fff',
+			background: '#671f2b',
+			font: '14px/1.4 system-ui, sans-serif'
+		});
+		doc.body.append(warning);
+		return;
+	}
 	if(!locStorage) {
 		nav = initBrowser();
 	}

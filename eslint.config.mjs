@@ -7,9 +7,21 @@ import { defineConfig } from 'eslint/config';
 	'quote-props': ['error', 'always'] */
 
 export default defineConfig([{
+	'ignores': [
+		'dist/**',
+		'extension/v3/**',
+		'node_modules/**'
+	]
+}, {
 	'extends': ['js/recommended'],
 	'files': ['**/*.{js,mjs,cjs}'],
-	'languageOptions': { 'globals': globals.browser },
+	'languageOptions': {
+		'globals': {
+			...globals.browser,
+			...globals.node,
+			'chrome': 'readonly'
+		}
+	},
 	'plugins': { js },
 	'rules': {
 		'array-bracket-spacing': ['error', 'never'],
@@ -38,7 +50,7 @@ export default defineConfig([{
 				'while': { 'after': false }
 			}
 		}],
-		'linebreak-style': ['error', 'windows'],
+		'linebreak-style': 'off',
 		'max-len': ['error', 110, { 'ignoreRegExpLiterals': true, 'ignoreUrls': true }],
 		'new-cap': ['error', {
 			'capIsNewExceptions': [

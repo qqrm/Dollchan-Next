@@ -1,0 +1,63 @@
+name: Release Firefox beta
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Unique unlisted Firefox version (0.9.x)
+        required: true
+        default: 0.9.0
+
+permissions:
+  contents: write
+
+jobs:
+  sign-beta:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Validate beta version
+        env:
+          BUILD_VERSION: ${{ inputs.version }}
+        run: test "$(printf '%s' "$BUILD_VERSION" | sed -nE '/^0\.9\.[0-9]+$/p')" = "$BUILD_VERSION"
+      - run: npm ci
+      - name: Verify beta package
+        env:
+          BUILD_VERSION: ${{ inputs.version }}
+        run: npm run verify
+      - run: npm run build:source
+      - name: Sign unlisted XPI
+        env:
+          AMO_API_KEY: ${{ secrets.JWT_ISSUER }}
+          AMO_API_SECRET: ${{ secrets.JWT_SECRET }}
+        run: |
+          npx web-ext sign \
+            --source-dir dist/firefox \
+            --artifacts-dir web-ext-artifacts \
+            --api-key "$AMO_API_KEY" \
+            --api-secret "$AMO_API_SECRET" \
+            --channel unlisted \
+            --upload-source-code dist/source/dollchan-next-source.zip \
+            --approval-timeout 0 \
+            --timeout 900000
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dollchan-next-beta-${{ inputs.version }}
+          path: web-ext-artifacts/*.xpi
+          if-no-files-found: error
+          retention-days: 30
+      - name: Publish GitHub prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_VERSION: ${{ inputs.version }}
+        run: |
+          gh release create "beta-$BUILD_VERSION" web-ext-artifacts/*.xpi \
+            --target "$GITHUB_SHA" \
+            --prerelease \
+            --title "Dollchan Next beta $BUILD_VERSION" \
+            --notes "Signed unlisted Firefox/Zen beta. Beta updates require reinstalling the XPI."

@@ -60,69 +60,6 @@ const DollchanAPI = {
 	}
 };
 
-// Checking for Dollchan updates from Github
-async function checkForUpdates(isManual, lastUpdateTime) {
-	if(!isManual) {
-		if(Date.now() - +lastUpdateTime < [0, 1, 2, 7, 14, 30][Cfg.updDollchan] * 1e3 * 60 * 60 * 24) {
-			throw new Error('It\'s not time for an update yet');
-		}
-	}
-	let responseText;
-	try {
-		({ responseText } = await $ajax(gitRaw + 'src/modules/Wrap.js',
-			{ 'Content-Type': 'text/plain' }, true));
-	} catch(err) {
-		if(isManual) {
-			return `<div style="color: red; font-weigth: bold;">${ Lng.noConnect[lang] }</div>`;
-		} else {
-			throw new Error(Lng.noConnect[lang], { cause: err });
-		}
-	}
-	const v = responseText.match(/const version = '([0-9.]+)';/);
-	const remoteVer = v?.[1]?.split('.');
-	if(!remoteVer) {
-		throw new Error('Can\'t get remote version');
-	}
-	const currentVer = version.split('.');
-	const src = `${ gitRaw }${
-		nav.isESNext ? 'src/Dollchan_Extension_Tools.es6' : 'Dollchan_Extension_Tools' }.user.js`;
-	await CfgSaver.saveObj('lastUpd', () => Date.now());
-	const link = `<a style="color: blue; font-weight: bold;" href="${ src }">`;
-	const chLogLink = `<a target="_blank" href="${ gitWiki }${
-		lang === 1 ? 'versions-en' : 'versions' }">\r\n${ Lng.changeLog[lang] }<a>`;
-	for(let i = 0, len = Math.max(currentVer.length, remoteVer.length); i < len; ++i) {
-		if((+remoteVer[i] || 0) > (+currentVer[i] || 0)) {
-			return `${ link }${ Lng.updAvail[lang].replace('%s', v[1]) }</a>${ chLogLink }`;
-		} else if((+remoteVer[i] || 0) < (+currentVer[i] || 0)) {
-			break;
-		}
-	}
-	if(isManual) {
-		const c = responseText.match(/const commit = '([0-9abcdef]+)';/)[1];
-		const vc = version + '.' + c;
-		return c === commit ? Lng.haveLatestCommit[lang].replace('%s', vc) :
-			`${ Lng.haveLatestStable[lang].replace('%s', version) }\r\n${
-				Lng.newCommitsAvail[lang].replace('%s', `${ link }${ vc }</a>${ chLogLink }`) }`;
-	}
-	throw new Error();
-}
-
-// Donation message after Dollchan update
-function showDonateMsg() {
-	const item = (name, value) =>
-		`<div>- <i>${ name }</i>: <i style="font: 14px monospace; color: green;">${ value }</i></div>`;
-	$popup('donate', Lng.donateMsg[lang] + `:<br style="margin-bottom: 8px;"><!--
-		--><div class="de-donate-logo"><svg><use xlink:href="#de-symbol-panel-logo"/></svg></div><!--
-		--><div style="display: inline-flex; flex-direction: column; gap: 6px; vertical-align: top;">` +
-			item('BTC', '13NWiiMocssmXiaVKRG4A4SQ6JP4WbLACz') +
-			item('BTC (SegWit)', 'bc1q2x33mkrwv6zadhflvxv2cct45ssn5a7t4ygvtj') +
-			item('ETH', '0xffa96732ae8df25c34444c70c0d59c752a47aafa') +
-			item('Mastercard', '5375411208220306') +
-			`<div>- <a href="https://send.monobank.ua/jar/A7Saf6YAaz" target="_blank">${
-				Lng.donateOnline[lang] }</a></div>` +
-		'</div>');
-}
-
 function initPage() {
 	if(aib.t) {
 		if(Cfg.rePageTitle && Thread.first) {

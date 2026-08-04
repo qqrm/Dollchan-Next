@@ -1,0 +1,23 @@
+{
+	"summary": {
+		"en-US": "A modern imageboard companion with powerful local content filters and keyboard navigation.",
+		"ru": "Современный помощник для имиджборд с локальными фильтрами и клавиатурной навигацией."
+	},
+	"description": {
+		"en-US": "Dollchan Next is an independent, modernised fork of Dollchan Extension Tools. It improves imageboard navigation, posting, media handling and local content filtering. External media services are disabled until explicitly enabled.",
+		"ru": "Dollchan Next — независимый, существенно переработанный форк Dollchan Extension Tools. Он улучшает навигацию, постинг, работу с медиа и локальную фильтрацию контента. Внешние медиасервисы отключены до явного согласия."
+	},
+	"categories": [
+		"social-communication"
+	],
+	"homepage": {
+		"en-US": "https://github.com/qqrm/Dollchan-Next"
+	},
+	"support_url": {
+		"en-US": "https://github.com/qqrm/Dollchan-Next/issues"
+	},
+	"version": {
+		"license": "MIT",
+		"approval_notes": "Independent MIT-licensed fork with substantial filtering, hotkey, privacy, UI and build changes. Build with Node.js 22: npm ci && npm run verify. The submitted package contains no remote executable code. Optional YouTube/Vimeo metadata and image-search integrations are disabled by default and require an explicit in-product opt-in. Full data-flow documentation is included in PRIVACY.md; dynamic markup boundaries are classified in AMO_REVIEW.md. Human-readable source is uploaded with this submission."
+	}
+}

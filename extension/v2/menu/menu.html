@@ -1,16 +1,29 @@
-<!DOCTYPE html>
-
-<html>
+<!doctype html>
+<html lang="en">
 <head>
 	<meta charset="utf-8">
-	<link rel="stylesheet" href="menu.css"/>
-	<script type="text/javascript" src="menu.js"></script>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="../shared/theme.css">
+	<link rel="stylesheet" href="menu.css">
+	<script src="menu.js" defer></script>
+	<title>Dollchan Next</title>
 </head>
 <body>
-	<div id="header">v24.9.16.0</div>
-	<div id="menu">
-		<div id="option-toggle" class="option">Enabled</div>
-		<div id="option-settings" class="option">Settings</div>
-	</div>
+	<main class="dn-popup dn-card">
+		<header class="dn-brand">
+			<img src="../icons/dn.svg" alt="">
+			<div><strong>Dollchan Next</strong><small>v{{VERSION}}</small></div>
+		</header>
+		<section class="dn-state">
+			<div id="extension-status" class="dn-status" data-enabled="true">Enabled</div>
+			<label class="dn-switch"><span class="dn-muted">Global</span><input id="extension-toggle" type="checkbox" role="switch"></label>
+		</section>
+		<section class="dn-site">
+			<span class="dn-muted">Current site</span>
+			<strong id="current-site">Unavailable</strong>
+			<small id="site-state" class="dn-muted">Open a web page to inspect scope.</small>
+		</section>
+		<button id="open-settings" class="dn-primary" type="button">Settings &amp; privacy</button>
+	</main>
 </body>
 </html>

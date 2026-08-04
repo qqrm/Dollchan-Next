@@ -1,54 +1,36 @@
 {
-	"name": "Dollchan-Extension-Tools",
-	"version": "24.9.16",
-	"author": "SthephanShi",
-	"description": "Doing some profit for imageboards",
-	"homepage": "https://dollchan.net/",
+	"name": "dollchan-next",
+	"version": "1.0.0",
+	"author": "qqrm",
+	"description": "A modern, privacy-conscious imageboard companion for Firefox and Zen",
+	"homepage": "https://github.com/qqrm/Dollchan-Next",
 	"license": "MIT",
+	"engines": {
+		"node": "22.x"
+	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/qqrm/Dollchan-Extension-Tools.git"
+		"url": "https://github.com/qqrm/Dollchan-Next.git"
 	},
 	"scripts": {
-		"start:firefox": "web-ext run --source-dir ./extension/v2",
-		"test": "node --test test/content-matching.test.cjs"
+		"benchmark": "node test/content-matching.bench.cjs",
+		"build:firefox": "gulp build:firefox",
+		"build:source": "node scripts/build-source-archive.mjs",
+		"icons": "node scripts/generate-icons.mjs",
+		"lint": "eslint extension/v2/background.js extension/v2/menu/menu.js extension/v2/settings/settings.js scripts test gulpfile.js eslint.config.mjs",
+		"lint:firefox": "node scripts/check-web-ext-lint.mjs",
+		"start:firefox": "npm run build:firefox && web-ext run --source-dir dist/firefox",
+		"test": "node --test test/*.test.cjs",
+		"verify": "npm run test && npm run benchmark && npm run lint && npm run build:firefox && npm run lint:firefox && node scripts/assert-clean-build.mjs"
 	},
 	"bugs": {
-		"url": "https://github.com/qqrm/Dollchan-Extension-Tools/issues"
-	},
-	"babel": {
-		"compact": false,
-		"presets": [
-			"@babel/preset-env"
-		],
-		"plugins": [
-			[
-				"@babel/plugin-transform-for-of",
-				{
-					"loose": true
-				}
-			]
-		]
+		"url": "https://github.com/qqrm/Dollchan-Next/issues"
 	},
 	"devDependencies": {
-		"@babel/core": "^7.29.0",
-		"@babel/preset-env": "^7.29.0",
 		"@eslint/js": "^10.0.1",
-		"babelify": "^10.0.0",
-		"browserify": "^17.0.1",
-		"core-js": "^3.48.0",
-		"element-closest-polyfill": "^1.0.7",
-		"element-polyfill": "^1.1.0",
 		"eslint": "^10.0.0",
 		"globals": "^17.3.0",
 		"gulp": "^5.0.1",
-		"gulp-file": "^0.4.0",
-		"gulp-headerfooter": "^1.0.3",
-		"gulp-replace": "^1.1.4",
-		"gulp-streamify": "^1.0.2",
-		"gulp-strip-comments": "^2.6.0",
-		"gulp-tap": "^2.0.0",
-		"regenerator-runtime": "^0.14.1",
-		"vinyl-source-stream": "^2.0.0"
+		"web-ext": "10.5.0"
 	}
 }

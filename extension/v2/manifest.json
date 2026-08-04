@@ -1,15 +1,25 @@
 {
-	"name": "Dollchan Extension Tools",
-	"version": "24.9.16.0",
-	"description": "The best way to browse imageboards!",
-	"homepage_url": "https://dollchan.net/",
-	"short_name": "Dollchan Ext",
+	"name": "Dollchan Next",
+	"version": "1.0.0",
+	"description": "A modern, privacy-conscious imageboard companion for Firefox and Zen.",
+	"homepage_url": "https://github.com/qqrm/Dollchan-Next",
+	"short_name": "Dollchan Next",
 	"manifest_version": 2,
 
-	"applications": {
+	"browser_specific_settings": {
 		"gecko": {
-			"id": "dollchan_extension@dollchan.net",
-			"strict_min_version": "79.0"
+			"id": "dollchan-next@qqrm.github.io",
+			"strict_min_version": "140.0",
+			"data_collection_permissions": {
+				"required": [
+					"personalCommunications",
+					"browsingActivity",
+					"websiteContent"
+				]
+			}
+		},
+		"gecko_android": {
+			"strict_min_version": "142.0"
 		}
 	},
 	"background": {
@@ -18,17 +28,25 @@
 	"browser_action": {
 		"browser_style": false,
 		"default_icon": {
-			"32": "icons/logo-32-light.png"
+			"16": "icons/dn-16.png",
+			"32": "icons/dn-32.png",
+			"48": "icons/dn-48.png"
 		},
-		"default_title": "Dollchan Extension (enabled)",
+		"default_title": "Dollchan Next",
 		"default_popup": "menu/menu.html"
 	},
 	"icons": {
-		"16": "icons/logo-16.png",
-		"32": "icons/logo-32.png",
-		"48": "icons/logo-48.png",
-		"96": "icons/logo-96.png",
-		"128": "icons/logo-128.png"
+		"16": "icons/dn-16.png",
+		"32": "icons/dn-32.png",
+		"48": "icons/dn-48.png",
+		"64": "icons/dn-64.png",
+		"96": "icons/dn-96.png",
+		"128": "icons/dn-128.png",
+		"256": "icons/dn-256.png"
+	},
+	"options_ui": {
+		"page": "settings/settings.html",
+		"open_in_tab": true
 	},
 	"permissions": [
 		"<all_urls>",

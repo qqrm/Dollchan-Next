@@ -50,7 +50,7 @@ const defaultCfg = {
 	preLoadImgs : 0,    // preload images [0=off, 1=all, 2=non-WebM]
 	findImgFile : 0,    //    detect embedded files in images
 	openImgs    : 0,    // replace thumbs with original images [0=off, 1=all, 2=GIFs only, 3=non-GIFs]
-	imgSrcBtns  : 1,    // add "Search" buttons for images
+	imgSrcBtns  : 0,    // external image search (requires explicit consent)
 	imgNames    : 0,    // image names in links [0=off, 1=original, 2=hide]
 	maskImgs    : 0,    // NSFW mode
 	maskVisib   : 7,    // image opacity in NSFW mode [0-100%]
@@ -69,13 +69,13 @@ const defaultCfg = {
 	addOPLink   : 1,    // insert >>link when replying to OP on board
 	addImgs     : 0,    // load images to jpg/png/gif links*
 	addMP3      : 1,    // embed mp3 links
-	addVocaroo  : 1,    // embed Vocaroo links
-	embedYTube  : 1,    // embed YouTube links [0=off, 1=preview+player, 2=onclick]
+	addVocaroo  : 0,    // embed Vocaroo links (requires explicit consent)
+	embedYTube  : 2,    // embed YouTube links [0=off, 1=preview+player, 2=onclick]
 	YTubeWidth  : 360,  //    player width (px)
 	YTubeHeigh  : 270,  //    player height (px)
-	YTubeTitles : 1,    //    load titles for YouTube links
+	YTubeTitles : 0,    //    external metadata requires explicit consent
 	ytApiKey    : '',   //    YouTube API key
-	addVimeo    : 1,    //    embed Vimeo links
+	addVimeo    : 0,    //    embed Vimeo links (requires explicit consent)
 	// POSTFORM
 	ajaxPosting : 1,    // posting without refresh
 	postSameImg : 1,    //    ability to post duplicate images
@@ -104,7 +104,8 @@ const defaultCfg = {
 	noName      : 0,    // hide form "Name" field
 	noSubj      : 0,    // hide form "Subject" field
 	// COMMON
-	scriptStyle : 0,    /* Dollchan style [
+	theme       : 'system', // Dollchan Next theme [system, light, dark]
+	scriptStyle : 0,    /* legacy Dollchan style [
 		0=gradient darkblue, 1=gradient blue, 2=solid grey, 3=transparent blue, 4=square dark,
 		5=gradient pink] */
 	userCSS     : 0,    // user CSS
@@ -124,7 +125,7 @@ const defaultCfg = {
 		[0=by opnum, 1=by opnum (desc), 2=by adding, 3=by adding (desc)] */
 	favWinOn    : 0,    // always open the Favorites window
 	closePopups : 0,    // close popups automatically
-	updDollchan : 2,    // Check for Dollchan updates [0=off, 1=per day, 2=2days, 3=week, 4=2weeks, 5=month]
+	externalServices: 0, // optional external media/search services consent
 	// WINDOWS
 	textaWidth  : 300,  // textarea width (px)
 	textaHeight : 115,  // textarea height (px)

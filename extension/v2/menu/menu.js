@@ -1,38 +1,46 @@
-/* eslint indent: ["error", "tab", { "outerIIFEBody": 0 }] */
-(function() {
-'use strict';
-async function getStored(id) {
-	// Read storage.local first. If it not existed then read storage.sync
-	const value = await new Promise(resolve => chrome.storage.local.get(id, obj => {
-		if(Object.keys(obj).length) {
-			resolve(obj[id]);
-		} else {
-			chrome.storage.sync.get(id, obj => resolve(obj[id]));
-		}
-	}));
-	return value;
-}
-
-function setOptionToggle(isEnabled) {
-	const el = document.getElementById('option-toggle');
-	el.classList.toggle('option-toggle-disabled', !isEnabled);
-	el.textContent = isEnabled ? 'Enabled' : 'Disabled';
-}
-
-document.addEventListener('click', e => {
-	const el = e.target;
-	switch(el.id) {
-	case 'option-toggle':
-		// Conversation with background.js
-		chrome.runtime.sendMessage({ 'de-messsage': 'toggleDollchan' },
-			response => setOptionToggle(response.answer));
-		break;
-	case 'option-settings':
-		chrome.tabs.create({ url: '../settings/settings.html' });
-		window.close();
-		break;
+const sendMessage = message => new Promise(resolve => chrome.runtime.sendMessage(message, resolve));
+const getStored = id => new Promise(resolve => chrome.storage.local.get(id, local => {
+	if(Object.prototype.hasOwnProperty.call(local, id)) {
+		resolve(local[id]);
+	} else {
+		chrome.storage.sync.get(id, synced => resolve(synced[id]));
 	}
-}, true);
+}));
 
-getStored('DESU_enabled').then(val => setOptionToggle(val === true));
-}());
+function matchesScope(url, scope) {
+	const matches = list => (list || '').split(/\r?\n/).filter(Boolean).some(pattern => {
+		const expression = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*');
+		return new RegExp(`^${ expression }$`).test(url);
+	});
+	return matches(scope.includes || '*') && !matches(scope.excludes || '');
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+	const toggle = document.getElementById('extension-toggle');
+	const status = document.getElementById('extension-status');
+	const setStatus = enabled => {
+		toggle.checked = enabled;
+		status.dataset.enabled = String(enabled);
+		status.textContent = enabled ? 'Enabled' : 'Disabled';
+	};
+	const state = await sendMessage({ 'de-messsage': 'getDollchanNextStatus' });
+	setStatus(Boolean(state?.enabled));
+	toggle.addEventListener('change', async () => {
+		const answer = await sendMessage({ 'de-messsage': 'toggleDollchan' });
+		setStatus(Boolean(answer?.answer));
+	});
+	document.getElementById('open-settings').addEventListener('click', () =>
+		chrome.runtime.openOptionsPage());
+
+	chrome.tabs.query({ active: true, currentWindow: true }, async tabs => {
+		const url = tabs[0]?.url;
+		if(!url?.startsWith('http')) {
+			return;
+		}
+		const parsed = new URL(url);
+		document.getElementById('current-site').textContent = parsed.hostname;
+		const scope = await getStored('DESU_scope') || { includes: '*', excludes: '' };
+		document.getElementById('site-state').textContent = matchesScope(url, scope) ?
+			'Included in extension scope.' : 'Excluded from extension scope.';
+	});
+});

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Dollchan Next disabled">
+  <rect x="6" y="6" width="116" height="116" rx="30" fill="#292b33"/>
+  <path d="M28 31h27c24 0 39 13 39 33S79 97 55 97H28V31Zm19 17v32h9c12 0 19-6 19-16s-7-16-19-16h-9Z" fill="#777b88"/>
+  <path d="M77 31h18l15 23V31h18v66h-18L95 74v23H77V31Z" fill="#a1a4ad" transform="translate(-12)"/>
+</svg>
