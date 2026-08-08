@@ -30,6 +30,8 @@ test('external services are disabled before explicit consent', () => {
 	const storage = read('src/modules/Storage.js');
 	assert.match(storage, /getStoredObj\('DESU_Privacy'\)/);
 	assert.match(storage, /if\(!Cfg\.externalServices\)/);
+	const players = read('src/modules/Players.js');
+	assert.match(players, /if\(!Cfg\.YTubeTitles\)\s*{\s*return null;/);
 });
 
 test('storage adds schema and migrates legacy presentation without deleting old fields', () => {
@@ -55,6 +57,9 @@ test('the built-in dollchan.net copy is migrated instead of blocking Dollchan Ne
 	const main = read('src/modules/Main.js');
 	assert.match(main, /existingDollchan\.classList\.contains\('de-runned-inpage'\)/);
 	assert.match(main, /Disable the original extension and reload this page/);
+	assert.match(main, /#de-main-container\.de-runned-inpage:not\(\[data-dollchan-next\]\)/);
+	assert.match(main, /#de-css, #de-css-dynamic, #de-css-user/);
+	assert.match(read('src/modules/Panel.js'), /data-dollchan-next/);
 	const storage = read('src/modules/Storage.js');
 	assert.match(storage, /locObj\.disabled = 1/);
 	assert.match(storage, /deWindow\.location\.reload\(\)/);
