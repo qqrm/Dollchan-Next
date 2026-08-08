@@ -8,36 +8,45 @@ const Panel = Object.create({
 	initPanel(formEl) {
 		const filesCount = $Q(aib.qPostImg, formEl).length;
 		const isThr = aib.t;
-		this.mainEl = $bBegin(formEl, `<div id="de-main-container" class="de-runned-${
+		this.mainEl = $bBegin(formEl, `<div id="de-main-container" data-dollchan-next class="de-runned-${
 			nav.isInPage ? 'inpage' : 'userscript' }">
 			<div id="de-panel">
-				<div id="de-panel-btn-logo" class="de-panel-btn" title="Dollchan Next">
+				<button id="de-panel-btn-logo" class="de-panel-btn" type="button" title="Dollchan Next">
 					<svg class="de-panel-svg">
 						<use xlink:href="#de-symbol-panel-logo"/>
 					</svg>
-				</div>
+					<span class="de-panel-wordmark">Next</span>
+				</button>
 				<span id="de-panel-buttons"${ !Cfg.expandPanel ? ' style="display: none;"' : '' }>
-				${ Cfg.disabled ? this._getButton('enable') : this._getButton('cfg') +
-					this._getButton('hid') +
-					this._getButton('fav') +
-					(Cfg.embedYTube ? this._getButton('vid') : '') +
-					(!localData ?
-						this._getButton('refresh') +
-						(isThr || aib.page !== aib.firstPage ? this._getButton('goback') : '') +
-						(!isThr && aib.page !== aib.lastPage ? this._getButton('gonext') : '') : '') +
-					this._getButton('goup') +
-					this._getButton('godown') +
-					(filesCount ? this._getButton('expimg') +
-						this._getButton('maskimg', Cfg.maskImgs ? 'de-panel-btn-active' : '') : '') +
-					(!localData ?
-						(filesCount && !Cfg.preLoadImgs ? this._getButton('preimg') : '') +
-						(isThr ? this._getButton('savethr') : '') : '') +
-					(!localData && isThr ?
-						this._getButton(Cfg.ajaxUpdThr && !aib.isArchived ? 'upd-on' : 'upd-off') +
-						(!nav.isSafari ? this._getButton('audio-off') : '') : '') +
-					(aib.hasCatalog ? this._getButton('catalog') : '') +
-					this._getButton('enable') +
-					(isThr && Thread.first ? `<span id="de-panel-info">
+				${ Cfg.disabled ? `<span class="de-panel-group de-panel-group-status">${
+					this._getButton('enable') }</span>` : `
+					<span class="de-panel-group de-panel-group-primary">
+						${ this._getButton('cfg') }
+						${ this._getButton('hid') }
+						${ this._getButton('fav') }
+						${ Cfg.embedYTube ? this._getButton('vid') : '' }
+					</span>
+					<span class="de-panel-group de-panel-group-navigation">
+						${ !localData ? this._getButton('refresh') +
+							(isThr || aib.page !== aib.firstPage ? this._getButton('goback') : '') +
+							(!isThr && aib.page !== aib.lastPage ? this._getButton('gonext') : '') : '' }
+						${ this._getButton('goup') }
+						${ this._getButton('godown') }
+						${ aib.hasCatalog ? this._getButton('catalog') : '' }
+					</span>
+					<span class="de-panel-group de-panel-group-media">
+						${ filesCount ? this._getButton('expimg') +
+							this._getButton('maskimg', Cfg.maskImgs ? 'de-panel-btn-active' : '') : '' }
+						${ !localData ?
+							(filesCount && !Cfg.preLoadImgs ? this._getButton('preimg') : '') +
+							(isThr ? this._getButton('savethr') : '') : '' }
+						${ !localData && isThr ?
+							this._getButton(Cfg.ajaxUpdThr && !aib.isArchived ? 'upd-on' : 'upd-off') +
+							(!nav.isSafari ? this._getButton('audio-off') : '') : '' }
+					</span>
+					<span class="de-panel-group de-panel-group-status">
+						${ this._getButton('enable') }
+						${ isThr && Thread.first ? `<span id="de-panel-info">
 						<span id="de-panel-info-posts" title="${
 						Lng.panelBtn[Cfg.panelCounter !== 2 ? 'postsCount' : 'postsNotHid'][lang]
 						}">${ Thread.first.postsCount }</span>
@@ -45,7 +54,8 @@ const Panel = Object.create({
 							filesCount }</span>
 						<span id="de-panel-info-posters" title="${ Lng.panelBtn.postersCount[lang] }">${
 							aib.postersCount }</span>
-					</span>` : '') }
+					</span>` : '' }
+					</span>` }
 				</span>
 			</div>
 			${ Cfg.disabled ? '' : '<div id="de-wrapper-popup"></div>' }
@@ -74,14 +84,13 @@ const Panel = Object.create({
 			}
 		} else if(nav.hasInPageDE) {
 			// Removing a Dollchan copy that may be already embedded on the page
-			$Q('#de-main, #de-main-container:not(.de-runned-userscript)').forEach(
+			$Q('#de-main, #de-main-container:not([data-dollchan-next])').forEach(
 				el => el !== this.mainEl && el?.remove());
 		}
 		if('isTrusted' in e && !e.isTrusted) {
 			return;
 		}
-		let el = e.target;
-		el = el.tagName.toLowerCase() === 'svg' ? el.parentNode : el;
+		let el = e.target.closest?.('.de-panel-btn') || e.target;
 		switch(e.type) {
 		case 'click':
 			if(el.tagName.toLowerCase() === 'a') {

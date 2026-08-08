@@ -80,6 +80,12 @@ async function runMain(checkDomains, dataPromise) {
 	if(!Cfg.disabled && aib.init?.() || !localData && doc.body.classList.contains('de-runned-local')) {
 		return;
 	}
+	if(nav.hasInPageDE) {
+		// The disabled in-page copy leaves its panel, SVG sprite and three style elements behind.
+		// Remove them before mounting Dollchan Next so duplicate IDs cannot make the legacy CSS win.
+		$Q('#de-main, #de-main-container.de-runned-inpage:not([data-dollchan-next]), #de-svg-icons, ' +
+			'#de-css, #de-css-dynamic, #de-css-user').forEach(el => el.remove());
+	}
 	Logger.log('Storage loading');
 	addSVGIcons();
 	if(Cfg.disabled) {
