@@ -51,6 +51,15 @@ test('popup and settings expose the release-critical controls', () => {
 	}
 });
 
+test('the built-in dollchan.net copy is migrated instead of blocking Dollchan Next', () => {
+	const main = read('src/modules/Main.js');
+	assert.match(main, /existingDollchan\.classList\.contains\('de-runned-inpage'\)/);
+	assert.match(main, /Disable the original extension and reload this page/);
+	const storage = read('src/modules/Storage.js');
+	assert.match(storage, /locObj\.disabled = 1/);
+	assert.match(storage, /deWindow\.location\.reload\(\)/);
+});
+
 test('release metadata identifies the derivative and omits upstream donation/update endpoints', () => {
 	const metadata = read('amo-metadata.json');
 	assert.match(metadata, /independent, modernised fork/i);

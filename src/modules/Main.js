@@ -41,7 +41,10 @@ async function runMain(checkDomains, dataPromise) {
 	if(!doc.body || !aib && !(aib = getImageBoard(checkDomains, true))) {
 		return;
 	}
-	if($id('de-main-container')) {
+	const existingDollchan = $id('de-main-container');
+	// dollchan.net ships its own in-page copy. The storage migration below disables that copy and reloads
+	// the page, so it must not be treated as a competing extension/userscript instance.
+	if(existingDollchan && !existingDollchan.classList.contains('de-runned-inpage')) {
 		const warning = doc.createElement('div');
 		warning.id = 'dn-conflict-warning';
 		warning.textContent = 'Dollchan Next detected another active Dollchan copy. Disable the original extension and reload this page.';
