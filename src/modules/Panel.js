@@ -15,7 +15,6 @@ const Panel = Object.create({
 					<svg class="de-panel-svg">
 						<use xlink:href="#de-symbol-panel-logo"/>
 					</svg>
-					<span class="de-panel-wordmark">Next</span>
 				</button>
 				<span id="de-panel-buttons"${ !Cfg.expandPanel ? ' style="display: none;"' : '' }>
 				${ Cfg.disabled ? `<span class="de-panel-group de-panel-group-status">${
