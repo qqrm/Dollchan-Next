@@ -549,6 +549,14 @@ const Lng = {
 			'Автоматично закривати сповіщення']
 	},
 
+	// Main panel groups
+	panelGroup: {
+		primary   : ['Инструменты', 'Tools', 'Інструменти'],
+		navigation: ['Навигация', 'Navigation', 'Навігація'],
+		media     : ['Медиа', 'Media', 'Медіа'],
+		status    : ['Состояние', 'Status', 'Стан']
+	},
+
 	// Main panel buttons: tooltips
 	panelBtn: {
 		attach: [

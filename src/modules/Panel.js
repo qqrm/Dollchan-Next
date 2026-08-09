@@ -11,21 +11,26 @@ const Panel = Object.create({
 		this.mainEl = $bBegin(formEl, `<div id="de-main-container" data-dollchan-next class="de-runned-${
 			nav.isInPage ? 'inpage' : 'userscript' }">
 			<div id="de-panel">
-				<button id="de-panel-btn-logo" class="de-panel-btn" type="button" title="Dollchan Next">
+				<button id="de-panel-btn-logo" class="de-panel-btn" type="button" title="Dollchan Next"
+					aria-label="Dollchan Next" aria-controls="de-panel-buttons"
+					aria-expanded="${ Cfg.expandPanel ? 'true' : 'false' }">
 					<svg class="de-panel-svg">
 						<use xlink:href="#de-symbol-panel-logo"/>
 					</svg>
 				</button>
 				<span id="de-panel-buttons"${ !Cfg.expandPanel ? ' style="display: none;"' : '' }>
-				${ Cfg.disabled ? `<span class="de-panel-group de-panel-group-status">${
+				${ Cfg.disabled ? `<span class="de-panel-group de-panel-group-status" role="group"
+					data-label="${ Lng.panelGroup.status[lang] }" aria-label="${ Lng.panelGroup.status[lang] }">${
 					this._getButton('enable') }</span>` : `
-					<span class="de-panel-group de-panel-group-primary">
+					<span class="de-panel-group de-panel-group-primary" role="group"
+						data-label="${ Lng.panelGroup.primary[lang] }" aria-label="${ Lng.panelGroup.primary[lang] }">
 						${ this._getButton('cfg') }
 						${ this._getButton('hid') }
 						${ this._getButton('fav') }
 						${ Cfg.embedYTube ? this._getButton('vid') : '' }
 					</span>
-					<span class="de-panel-group de-panel-group-navigation">
+					<span class="de-panel-group de-panel-group-navigation" role="group"
+						data-label="${ Lng.panelGroup.navigation[lang] }" aria-label="${ Lng.panelGroup.navigation[lang] }">
 						${ !localData ? this._getButton('refresh') +
 							(isThr || aib.page !== aib.firstPage ? this._getButton('goback') : '') +
 							(!isThr && aib.page !== aib.lastPage ? this._getButton('gonext') : '') : '' }
@@ -33,7 +38,8 @@ const Panel = Object.create({
 						${ this._getButton('godown') }
 						${ aib.hasCatalog ? this._getButton('catalog') : '' }
 					</span>
-					<span class="de-panel-group de-panel-group-media">
+					<span class="de-panel-group de-panel-group-media" role="group"
+						data-label="${ Lng.panelGroup.media[lang] }" aria-label="${ Lng.panelGroup.media[lang] }">
 						${ filesCount ? this._getButton('expimg') +
 							this._getButton('maskimg', Cfg.maskImgs ? 'de-panel-btn-active' : '') : '' }
 						${ !localData ?
@@ -43,7 +49,8 @@ const Panel = Object.create({
 							this._getButton(Cfg.ajaxUpdThr && !aib.isArchived ? 'upd-on' : 'upd-off') +
 							(!nav.isSafari ? this._getButton('audio-off') : '') : '' }
 					</span>
-					<span class="de-panel-group de-panel-group-status">
+					<span class="de-panel-group de-panel-group-status" role="group"
+						data-label="${ Lng.panelGroup.status[lang] }" aria-label="${ Lng.panelGroup.status[lang] }">
 						${ this._getButton('enable') }
 						${ isThr && Thread.first ? `<span id="de-panel-info">
 						<span id="de-panel-info-posts" title="${
@@ -106,6 +113,7 @@ const Panel = Object.create({
 					$show(this._buttons);
 				}
 				await toggleCfg('expandPanel');
+				el.setAttribute('aria-expanded', String(Cfg.expandPanel));
 				return;
 			case 'de-panel-btn-cfg': toggleWindow('cfg', false); return;
 			case 'de-panel-btn-hid': toggleWindow('hid', false); return;
@@ -282,8 +290,10 @@ const Panel = Object.create({
 			tag = 'a';
 			href = aib.catalogUrl;
 		}
+		const label = title || Lng.panelBtn[id][lang];
 		return `<${ tag } id="de-panel-btn-${ id }" class="de-abtn de-panel-btn${
-			className ? ' ' + className : '' }" title="${ title || Lng.panelBtn[id][lang] }" ${
+			className ? ' ' + className : '' }" title="${ label }" aria-label="${ label }"
+			data-label="${ label }" ${
 			href ? 'href="' + href + '"' : '' }>
 			<svg class="de-panel-svg">
 			${ id !== 'audio-off' ? `

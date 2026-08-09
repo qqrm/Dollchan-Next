@@ -45,12 +45,15 @@ test('design system covers system themes, keyboard focus and narrow layouts', ()
 	assert.match(popup, /body\s*\{[^}]*width:\s*292px/);
 });
 
-test('embedded command dock stays compact and free of generic button chrome', () => {
+test('embedded command dock exposes grouped labelled actions without generic button chrome', () => {
 	const css = fs.readFileSync(path.join(root, 'src/modules/Css.js'), 'utf8');
 	const panel = fs.readFileSync(path.join(root, 'src/modules/Panel.js'), 'utf8');
 
 	assert.match(css, /\.de-panel-btn\s*\{[^}]*appearance:\s*none\s*!important/);
 	assert.match(css, /\.de-panel-btn\s*\{[^}]*border:\s*0\s*!important/);
 	assert.match(css, /\.de-abtn:not\(\.de-panel-btn\)/);
+	assert.match(css, /grid-template-columns:\s*repeat\(2,minmax\(0,1fr\)\)/);
+	assert.match(panel, /data-label="\$\{ label \}"/);
+	assert.match(panel, /aria-controls="de-panel-buttons"/);
 	assert.doesNotMatch(panel, /de-panel-wordmark/);
 });
