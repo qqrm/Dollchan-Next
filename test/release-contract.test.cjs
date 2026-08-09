@@ -65,6 +65,17 @@ test('the built-in dollchan.net copy is migrated instead of blocking Dollchan Ne
 	assert.match(storage, /deWindow\.location\.reload\(\)/);
 });
 
+test('2ch.org support is domain-wide rather than tied to one board path', () => {
+	const manifest = JSON.parse(read('extension/v2/manifest.json'));
+	const detector = read('src/modules/BoardDetector.js');
+	const background = read('extension/v2/background.js');
+
+	assert.ok(manifest.permissions.includes('<all_urls>'));
+	assert.match(detector, /ibDomains\['2ch\.org'\]\s*=\s*ibDomains\['2ch\.su'\]\s*=\s*Makaba/);
+	assert.match(background, /\{ includes: '\*', excludes: '' \}/);
+	assert.doesNotMatch(background, /2ch\.org\/b/);
+});
+
 test('release metadata identifies the derivative and omits upstream donation/update endpoints', () => {
 	const metadata = read('amo-metadata.json');
 	assert.match(metadata, /independent, modernised fork/i);
