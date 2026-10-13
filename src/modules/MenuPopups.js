@@ -14,6 +14,13 @@ function closePopup(data) {
 	}
 }
 
+// Error details are plain text, even when supplied by a remote server.
+function $popupText(id, text, isWait = false) {
+	const el = $popup(id, '', isWait);
+	el.append(doc.createTextNode(String(text)));
+	return el;
+}
+
 function $popup(id, txt, isWait = false) {
 	let el = $id('de-popup-' + id);
 	const html = `<span class="de-popup-btn">${

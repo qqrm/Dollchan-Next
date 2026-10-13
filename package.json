@@ -14,10 +14,10 @@
 	},
 	"scripts": {
 		"benchmark": "node test/content-matching.bench.cjs",
-		"build:firefox": "gulp build:firefox",
+		"build:firefox": "node scripts/build-firefox.mjs",
 		"build:source": "node scripts/build-source-archive.mjs",
 		"icons": "node scripts/generate-icons.mjs",
-		"lint": "eslint extension/v2/background.js extension/v2/menu/menu.js extension/v2/settings/settings.js scripts test gulpfile.js eslint.config.mjs",
+		"lint": "eslint extension/v2/background.js extension/v2/menu/menu.js extension/v2/settings/settings.js scripts test src/modules/ContentHelpers.js eslint.config.mjs",
 		"lint:firefox": "node scripts/check-web-ext-lint.mjs",
 		"start:firefox": "npm run build:firefox && web-ext run --source-dir dist/firefox",
 		"test": "node --test test/*.test.cjs",
@@ -30,7 +30,9 @@
 		"@eslint/js": "^10.0.1",
 		"eslint": "^10.0.0",
 		"globals": "^17.3.0",
-		"gulp": "^5.0.1",
-		"web-ext": "10.6.0"
+		"web-ext": "10.7.0"
+	},
+	"overrides": {
+		"shell-quote": "^1.12.0"
 	}
 }

@@ -1,17 +1,6 @@
 const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const path = require('node:path');
 const { performance } = require('node:perf_hooks');
-const vm = require('node:vm');
-
-const root = path.resolve(__dirname, '..');
-const source = fs.readFileSync(path.join(root, 'src/modules/Utils.js'), 'utf8');
-const start = source.indexOf('// Normalizes post text');
-const end = source.indexOf('// OTHER UTILS', start);
-const context = {};
-vm.runInNewContext(source.slice(start, end) +
-	'globalThis.helpers = { normalizePostText, isPostTextSimilar };', context);
-const { normalizePostText, isPostTextSimilar } = context.helpers;
+const { normalizePostText, isPostTextSimilar } = require('../src/modules/ContentHelpers.js');
 
 const sourceRules = [
 	...Array.from({ length: 250 }, (_, index) => `#ihash(${ 10_000_000 + index })`),

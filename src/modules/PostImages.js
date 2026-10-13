@@ -1047,67 +1047,7 @@ const ImagesHashStorage = Object.create({
 		Object.defineProperty(this, '_workers', { value, configurable: true });
 		return value;
 	},
-	_genImgHash: ([arrBuf, oldw, oldh]) => {
-		const buf = new Uint8Array(arrBuf);
-		const size = oldw * oldh;
-		for(let i = 0, j = 0; i < size; i++, j += 4) {
-			buf[i] = buf[j] * 0.3 + buf[j + 1] * 0.59 + buf[j + 2] * 0.11;
-		}
-		const newh = 8;
-		const neww = 8;
-		const levels = 4;
-		const areas = 256 / levels;
-		const values = 256 / (levels - 1);
-		let hash = 0;
-		for(let i = 0; i < newh; ++i) {
-			for(let j = 0; j < neww; ++j) {
-				let temp = i / (newh - 1) * (oldh - 1);
-				const l = Math.min(temp | 0, oldh - 2);
-				const u = temp - l;
-				temp = j / (neww - 1) * (oldw - 1);
-				const c = Math.min(temp | 0, oldw - 2);
-				const t = temp - c;
-				hash = (hash << 4) + Math.min(values * (((buf[l * oldw + c] * ((1 - t) * (1 - u)) +
-					buf[l * oldw + c + 1] * (t * (1 - u)) +
-					buf[(l + 1) * oldw + c + 1] * (t * u) +
-					buf[(l + 1) * oldw + c] * ((1 - t) * u)) / areas) | 0), 255);
-				const g = hash & 0xF0000000;
-				if(g) {
-					hash ^= g >>> 24;
-				}
-				hash &= ~g;
-			}
-		}
-		const sample = (x, y) => {
-			let temp = y / 7 * (oldh - 1);
-			const top = Math.min(temp | 0, oldh - 2);
-			const vertical = temp - top;
-			temp = x / 8 * (oldw - 1);
-			const left = Math.min(temp | 0, oldw - 2);
-			const horizontal = temp - left;
-			return buf[top * oldw + left] * ((1 - horizontal) * (1 - vertical)) +
-				buf[top * oldw + left + 1] * (horizontal * (1 - vertical)) +
-				buf[(top + 1) * oldw + left + 1] * (horizontal * vertical) +
-				buf[(top + 1) * oldw + left] * ((1 - horizontal) * vertical);
-		};
-		let perceptualHash = '';
-		let bits = 0;
-		let nibble = 0;
-		for(let y = 0; y < 8; ++y) {
-			let previous = sample(0, y);
-			for(let x = 1; x < 9; ++x) {
-				const current = sample(x, y);
-				nibble = (nibble << 1) | (previous > current ? 1 : 0);
-				previous = current;
-				if(++bits === 4) {
-					perceptualHash += nibble.toString(16);
-					bits = 0;
-					nibble = 0;
-				}
-			}
-		}
-		return { hash, perceptualHash };
-	},
+	_genImgHash: generateImageHash,
 	async _getImageHashes({ el, src }) {
 		if(!el.complete) {
 			await new Promise(resolve => el.addEventListener('load', () => resolve()));

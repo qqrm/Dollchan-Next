@@ -19,7 +19,7 @@ function showSubmitError(error) {
 	if(/[cf]aptch|капч|подтвер|verifi/i.test(error)) {
 		postform.refreshCaptchaTNum(true);
 	}
-	$popup('upload', error.toString());
+	$popupText('upload', error.toString());
 	updater.sendErrNotif();
 	updater.continueUpdater();
 	DollchanAPI.notify('submitform', { success: false, error });
@@ -104,7 +104,7 @@ async function checkSubmit(data) {
 async function checkDelete(data) {
 	const err = getSubmitError(data instanceof Document ? data : $createDoc(data));
 	if(err) {
-		$popup('delete', Lng.errDelete[lang] + ':\n' + err);
+		$popupText('delete', Lng.errDelete[lang] + ':\n' + err);
 		updater.sendErrNotif();
 		return;
 	}

@@ -5,26 +5,10 @@ const test = require('node:test');
 const vm = require('node:vm');
 
 const root = path.resolve(__dirname, '..');
-const utilsSource = fs.readFileSync(path.join(root, 'src/modules/Utils.js'), 'utf8');
-const helpersStart = utilsSource.indexOf('// Normalizes post text');
-const helpersEnd = utilsSource.indexOf('// OTHER UTILS', helpersStart);
-const helpersSource = utilsSource.slice(helpersStart, helpersEnd) +
-	'globalThis.helpers = { normalizePostText, getTextSimilarity, isPostTextSimilar, ' +
-	'getPerceptualHashDistance };';
-const helperContext = {};
-vm.runInNewContext(helpersSource, helperContext);
 const {
-	normalizePostText,
-	getTextSimilarity,
-	isPostTextSimilar,
-	getPerceptualHashDistance
-} = helperContext.helpers;
-
-const imageSource = fs.readFileSync(path.join(root, 'src/modules/PostImages.js'), 'utf8');
-const hashFunctionMatch = imageSource.match(
-	/_genImgHash: (\(\[arrBuf, oldw, oldh\]\) => \{[\s\S]*?\n\t\}),\n\tasync _getImageHashes/);
-assert.ok(hashFunctionMatch, 'image hash worker function should be discoverable');
-const generateImageHash = vm.runInNewContext(hashFunctionMatch[1]);
+	normalizePostText, getTextSimilarity, isPostTextSimilar, getPerceptualHashDistance,
+	normalizeHotKeyGroup, normalizeHotKeySets, findHotKeyAction, generateImageHash
+} = require('../src/modules/ContentHelpers.js');
 
 const spellsSource = fs.readFileSync(path.join(root, 'src/modules/Spells.js'), 'utf8');
 const namesMatch = spellsSource.match(/get names\(\) \{\s*return (\[[\s\S]*?\]);\s*\},/);
@@ -67,14 +51,6 @@ const interpreterContext = {
 vm.createContext(interpreterContext);
 vm.runInContext(spellsSource.slice(interpreterStart) +
 	'globalThis.SpellsInterpreter = SpellsInterpreter;', interpreterContext);
-
-const hotkeysSource = fs.readFileSync(path.join(root, 'src/modules/Hotkeys.js'), 'utf8');
-const hotkeysHelpersEnd = hotkeysSource.indexOf('const HotKeys');
-const hotkeysContext = {};
-vm.runInNewContext(hotkeysSource.slice(0, hotkeysHelpersEnd) +
-	'globalThis.hotkeyHelpers = { normalizeHotKeyGroup, normalizeHotKeySets, findHotKeyAction };',
-hotkeysContext);
-const { normalizeHotKeyGroup, normalizeHotKeySets, findHotKeyAction } = hotkeysContext.hotkeyHelpers;
 
 function makeGradient(width, height, reverse = false) {
 	const data = new Uint8Array(width * height * 4);

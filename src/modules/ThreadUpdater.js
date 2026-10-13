@@ -555,7 +555,7 @@ function initThreadUpdater(title, enableUpdate) {
 			if(enabled && paused) {
 				return;
 			}
-			$popup('newposts', Lng.loading[lang], true);
+			$popupText('newposts', Lng.loading[lang], true);
 			forceLoadPosts();
 		},
 		pauseUpdater() {

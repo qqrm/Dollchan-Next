@@ -2,10 +2,9 @@ import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 
 const root = path.resolve(import.meta.dirname, '..');
-const executable = path.join(
-	root, 'node_modules', '.bin', process.platform === 'win32' ? 'web-ext.cmd' : 'web-ext'
-);
-const result = JSON.parse(execFileSync(executable, [
+const executable = path.join(root, 'node_modules', 'web-ext', 'bin', 'web-ext.js');
+const result = JSON.parse(execFileSync(process.execPath, [
+	executable,
 	'lint',
 	'--source-dir', path.join(root, 'dist', 'firefox'),
 	'--self-hosted',

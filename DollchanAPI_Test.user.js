@@ -9,15 +9,16 @@
 function getDollchanAPI() {
 	return new Promise((resolve, reject) => {
 		const dw = document.defaultView;
-		const onmessage = ({ data, ports }) => {
-			if(ports && ports.length === 1 && data === 'de-answer-api-message') {
+		const onmessage = ({ data, ports, origin, source }) => {
+			if(source === dw && origin === dw.location.origin &&
+			ports && ports.length === 1 && data === 'de-answer-api-message') {
 				clearTimeout(to);
 				dw.removeEventListener('message', onmessage);
 				resolve(ports[0]);
 			}
 		};
 		dw.addEventListener('message', onmessage);
-		dw.postMessage('de-request-api-message', '*');
+		dw.postMessage('de-request-api-message', dw.location.origin);
 		const to = setTimeout(() => {
 			dw.removeEventListener('message', onmessage);
 			reject();

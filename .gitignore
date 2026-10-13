@@ -3,3 +3,5 @@ other
 dist
 web-ext-artifacts
 *.xpi
+
+__pycache__/

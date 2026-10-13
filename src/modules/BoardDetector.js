@@ -639,7 +639,7 @@ function getImageBoard(checkDomains, checkEngines) {
 					try {
 						obj = JSON.parse(xhr.responseText);
 					} catch(err) {}
-					$popup('report', obj.result === 1 ? Lng.succReported[lang] :
+					$popupText('report', obj.result === 1 ? Lng.succReported[lang] :
 						Lng.error[lang] + ': ' + obj.error.message);
 				});
 			});
@@ -719,7 +719,7 @@ function getImageBoard(checkDomains, checkEngines) {
 				$ajax(`/api/${ task }?board=${ this.b }&num=${ num }`).then(xhr => {
 					const obj = JSON.parse(xhr.responseText);
 					if(obj.result !== 1) {
-						$popup('err-2chlike', Lng.error[lang] + ': ' + obj.error.message);
+						$popupText('err-2chlike', Lng.error[lang] + ': ' + obj.error.message);
 						return;
 					}
 					likeEl.classList.add(`post__rate_${ task }d`);
@@ -1463,13 +1463,13 @@ function getImageBoard(checkDomains, checkEngines) {
 						try {
 							obj = JSON.parse(xhr.responseText);
 						} catch(err) {
-							$popup('report', Lng.reportError[lang] + ':<br>' + xhr.responseText);
+							$popupText('report', Lng.reportError[lang] + ':\n' + xhr.responseText);
 							return;
 						}
-						$popup('report', obj.result === 'ok' ? Lng.succReported[lang] :
+						$popupText('report', obj.result === 'ok' ? Lng.succReported[lang] :
 							obj.result === 'alreadysent' ? Lng.alreadyReported[lang] :
 							Lng.reportError[lang] +
-								(obj.result === 'error' && obj.message ? ':<br>' + obj.message : ''));
+								(obj.result === 'error' && obj.message ? ':\n' + obj.message : ''));
 					});
 				};
 			};
@@ -1776,9 +1776,10 @@ function getImageBoard(checkDomains, checkEngines) {
 			return $q('.sage', post).hasChildNodes();
 		}
 		init() {
-			if(!this.host.includes('nocsp.') && this.host.includes('kohlchan.net')) {
-				deWindow.location.assign(deWindow.location.href
-					.replace(/(www\.)?kohlchan\.net/, 'nocsp.kohlchan.net'));
+			if(this.host === 'kohlchan.net' || this.host === 'www.kohlchan.net') {
+				const target = new URL(deWindow.location.href);
+				target.hostname = 'nocsp.kohlchan.net';
+				deWindow.location.assign(target.href);
 				return true;
 			}
 			if(locStorage.autoRefreshMode !== 'false' || locStorage.convertLocalTimes !== 'false') {

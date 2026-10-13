@@ -943,12 +943,7 @@ Post.Content = class PostContent extends TemporaryContent {
 		return value;
 	}
 	get text() {
-		const value = this.post.msg.innerHTML
-			.replace(/<\/?(?:br|p|li)[^>]*?>/gi, '\n')
-			.replace(/<[^>]+?>/g, '')
-			.replaceAll('&gt;', '>')
-			.replaceAll('&lt;', '<')
-			.replaceAll('&nbsp;', '\u00A0').trim();
+		const value = extractPostText(this.post.msg).trim();
 		Object.defineProperty(this, 'text', { value });
 		return value;
 	}

@@ -23,7 +23,6 @@ execFileSync('git', [
 	'amo-metadata.json',
 	'eslint.config.mjs',
 	'extension/v2',
-	'gulpfile.js',
 	'package.json',
 	'package-lock.json',
 	'scripts',

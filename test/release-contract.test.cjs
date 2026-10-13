@@ -73,7 +73,7 @@ test('2ch.org support is domain-wide rather than tied to one board path', () => 
 	assert.ok(manifest.permissions.includes('<all_urls>'));
 	assert.match(detector, /ibDomains\['2ch\.org'\]\s*=\s*ibDomains\['2ch\.su'\]\s*=\s*Makaba/);
 	assert.match(background, /\{ includes: '\*', excludes: '' \}/);
-	assert.doesNotMatch(background, /2ch\.org\/b/);
+	assert.equal(background.includes('2ch.org/b'), false);
 });
 
 test('release metadata identifies the derivative and omits upstream donation/update endpoints', () => {

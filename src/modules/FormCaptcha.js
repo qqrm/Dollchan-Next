@@ -27,8 +27,11 @@ class Captcha {
 			$show(this.parentEl);
 		} else if(this._isRecap) {
 			const el = $q('#g-recaptcha, .g-recaptcha');
-			el.insertAdjacentHTML('afterend', `<div id="g-recaptcha" class="g-recaptcha" data-sitekey="${
-				el.getAttribute('data-sitekey') }"></div>`);
+			const replacement = doc.createElement('div');
+			replacement.id = 'g-recaptcha';
+			replacement.className = 'g-recaptcha';
+			replacement.setAttribute('data-sitekey', el.getAttribute('data-sitekey') || '');
+			el.after(replacement);
 			el.remove();
 		} else {
 			this.parentEl.innerHTML = this.originHTML;

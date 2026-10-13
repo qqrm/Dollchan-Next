@@ -285,10 +285,10 @@ function infoLoadErrors(err, showError = true) {
 	if(eCode === 200) {
 		closePopup('newposts');
 	} else if(isAjax && eCode === 0) {
-		$popup('newposts', err.message ? String(err.message) :
+		$popupText('newposts', err.message ? String(err.message) :
 			`${ Lng.noConnect[lang] }: \n${ getErrorMessage(err) }`);
 	} else {
-		$popup('newposts', `${ Lng.thrNotFound[lang] } (№${ aib.t }): \n${ getErrorMessage(err) }`);
+		$popupText('newposts', `${ Lng.thrNotFound[lang] } (№${ aib.t }): \n${ getErrorMessage(err) }`);
 		if(showError) {
 			doc.title = `{${ eCode }} ${ doc.title }`;
 		}
