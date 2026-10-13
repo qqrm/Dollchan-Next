@@ -41,7 +41,7 @@ jobs:
           info="$(gh pr view "$pr" --repo "$REPO" --json author,isCrossRepository,headRefOid,baseRefName,isDraft,state,statusCheckRollup)"
           if ! jq -e --arg sha "$CHECKED_SHA" '
             (.author.login == "app/dependabot" or .author.login == "dependabot[bot]") and
-            .isCrossRepository == false and .baseRefName == "main" and
+            .isCrossRepository == false and .baseRefName == "master" and
             .state == "OPEN" and .isDraft == false and .headRefOid == $sha and
             (["ci-gate", "workflow-security-gate"] -
               [.statusCheckRollup[] | select(.status == "COMPLETED" and .conclusion == "SUCCESS") | .name] | length == 0)
