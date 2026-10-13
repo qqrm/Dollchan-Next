@@ -51,3 +51,57 @@ test('date format grammar rejects HTML and arbitrary regex metacharacters', () =
 		assert.equal(check('dd+nn+yyyy+hh+ii' + suffix), true);
 	}
 });
+
+test('download menus pass filenames through DOM properties before serialization', () => {
+	const filename = '"><img src=x onerror=alert(1)>.png';
+	const metadata = '"><svg onload=alert(2)>';
+	const links = [];
+	const context = loadModule('MenuPopups.js', {
+		doc: {
+			createElement: tag => {
+				assert.equal(tag, 'a');
+				const anchor = {
+					attributes: {},
+					setAttribute(key, value) {
+						this.attributes[key] = value;
+					}
+				};
+				Object.defineProperty(anchor, 'outerHTML', {
+					get() {
+						links.push(anchor);
+						return '<a>serialized by DOM</a>';
+					}
+				});
+				return anchor;
+			}
+		},
+		Lng: {
+			searchIn : ['Search'],
+			saveAs   : ['Save'],
+			origName : ['Original'],
+			metaName : ['Metadata'],
+			boardName: ['Board']
+		},
+		lang       : 0,
+		aib        : { domain: 'board.example' },
+		getFileExt : () => 'png',
+		getFileName: () => 'board.png',
+		$q         : () => ({ textContent: metadata })
+	});
+	const menu = vm.runInContext('Menu', context);
+	const link = {
+		href        : 'https://cdn.example/board.png',
+		textContent : filename,
+		classList   : { contains: value => value === 'de-fullimg-link' },
+		getAttribute: () => null
+	};
+	const result = menu.getMenuImg({ nextSibling: link }, true);
+	assert.equal(result, '<a>serialized by DOM</a>'.repeat(3));
+	assert.equal(links[0].download, filename);
+	assert.equal(links[1].download, metadata + '.png');
+	assert.equal(links[2].download, 'board.png');
+	assert.equal(links[0].attributes.info, 'img-load');
+	assert.equal(links[0].href, link.href);
+	assert.equal(links[0].target, '_blank');
+	assert.ok(links[0].textContent.startsWith('Save "'));
+});

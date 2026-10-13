@@ -159,10 +159,17 @@ class Menu {
 				if(name.length > 20) {
 					nameShort = name.substr(0, 20 - ext.length) + '\u2026' + ext;
 				}
-				const info = aib.domain !== href.match(/^(?:(?:blob:)?https?:\/\/)([^/]+)/)[1] ?
-					' info="img-load"' : '';
-				return `<a class="de-menu-item" href="${ href }" download="${ name }" title="${
-					title }"${ info } target="_blank">${ Lng.saveAs[lang] } &quot;${ nameShort }&quot;</a>`;
+				const download = doc.createElement('a');
+				download.className = 'de-menu-item';
+				download.href = href;
+				download.download = name;
+				download.title = title;
+				if(aib.domain !== href.match(/^(?:(?:blob:)?https?:\/\/)([^/]+)/)[1]) {
+					download.setAttribute('info', 'img-load');
+				}
+				download.target = '_blank';
+				download.textContent = `${ Lng.saveAs[lang] } "${ nameShort }"`;
+				return download.outerHTML;
 			};
 			const name = decodeURIComponent(getFileName(origSrc));
 			const isFullImg = link.classList.contains('de-fullimg-link');
