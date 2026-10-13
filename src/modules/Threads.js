@@ -176,7 +176,7 @@ class Thread {
 		}
 		return ajaxPostsLoad(aib.b, this.num, false).then(
 			pBuilder => this._loadFromBuilder(task, isSmartScroll, pBuilder),
-			err => $popup('load-thr', getErrorMessage(err)));
+			err => $popupText('load-thr', getErrorMessage(err)));
 	}
 	/*
 	* New posts loading via ajax.

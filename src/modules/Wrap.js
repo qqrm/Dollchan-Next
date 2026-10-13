@@ -9,6 +9,7 @@ const commit = 'fa2468a';
 /* ==[ GlobalVars.js ]== */
 /* ==[ DefaultCfg.js ]== */
 /* ==[ Localization.js ]== */
+/* ==[ ContentHelpers.js ]== */
 /* ==[ Utils.js ]== */
 /* ==[ Storage.js ]== */
 /* ==[ Panel.js ]== */

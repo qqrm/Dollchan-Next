@@ -50,7 +50,7 @@ const Pages = {
 			return CancelablePromise.reject(new CancelError());
 		}).then(() => this._endAdding()).catch(err => {
 			if(!(err instanceof CancelError)) {
-				$popup('add-page', getErrorMessage(err));
+				$popupText('add-page', getErrorMessage(err));
 				this._endAdding();
 			}
 		});
@@ -100,7 +100,7 @@ const Pages = {
 			try {
 				this._addForm(await ajaxLoad(aib.getPageUrl(aib.b, i)), i);
 			} catch(err) {
-				$popup('load-pages', getErrorMessage(err));
+				$popupText('load-pages', getErrorMessage(err));
 			}
 		}
 		const { first } = DelForm;

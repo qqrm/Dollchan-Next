@@ -2,22 +2,6 @@
                                                    HOTKEYS
 =========================================================================================================== */
 
-function normalizeHotKeyGroup(group) {
-	const keys = Array.isArray(group) ? group : group ? [group] : [];
-	return [...new Set(keys.filter(key => Number.isInteger(key) && key > 0))];
-}
-
-function normalizeHotKeySets(keys) {
-	for(let i = 2; i <= 4; ++i) {
-		keys[i] = keys[i].map(normalizeHotKeyGroup);
-	}
-	return keys;
-}
-
-function findHotKeyAction(groups, key) {
-	return groups.findIndex(group => group.includes(key));
-}
-
 const HotKeys = {
 	cPost         : null,
 	enabled       : false,

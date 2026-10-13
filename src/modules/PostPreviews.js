@@ -309,7 +309,7 @@ class Pview extends AbstractPost {
 	}
 	_onerror(err) {
 		if(!(err instanceof CancelError)) {
-			this.el.innerHTML = (err instanceof AjaxError) && err.code === 404 ?
+			this.el.textContent = (err instanceof AjaxError) && err.code === 404 ?
 				Lng.postNotFound[lang] : getErrorMessage(err);
 		}
 	}

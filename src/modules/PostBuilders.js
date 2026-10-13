@@ -62,8 +62,8 @@ class _4chanPostsBuilder {
 		this._colorIDs = [];
 	}
 	static fixFileName(name, maxLength) {
-		const decodedName = name.replaceAll('&amp;', '&').replaceAll('&quot;', '"').replaceAll('&#039;', '\'')
-			.replaceAll('&lt;', '<').replaceAll('&gt;', '>');
+		const entities = { '&amp;': '&', '&quot;': '"', '&#039;': "'", '&lt;': '<', '&gt;': '>' };
+		const decodedName = name.replace(/&(?:amp|quot|#039|lt|gt);/g, entity => entities[entity]);
 		return decodedName.length <= maxLength ? { isFixed: false, name } : {
 			isFixed: true,
 			name   : decodedName.slice(0, 25).replaceAll('&', '&amp;').replaceAll('"', '&quot;')

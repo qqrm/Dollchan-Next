@@ -5337,6 +5337,13 @@ function closePopup(data) {
 	}
 }
 
+// Error details are plain text, even when supplied by a remote server.
+function $popupText(id, text, isWait = false) {
+	const el = $popup(id, '', isWait);
+	el.append(doc.createTextNode(String(text)));
+	return el;
+}
+
 function $popup(id, txt, isWait = false) {
 	let el = $id('de-popup-' + id);
 	const html = `<span class="de-popup-btn">${
@@ -7219,10 +7226,10 @@ function infoLoadErrors(err, showError = true) {
 	if(eCode === 200) {
 		closePopup('newposts');
 	} else if(isAjax && eCode === 0) {
-		$popup('newposts', err.message ? String(err.message) :
+		$popupText('newposts', err.message ? String(err.message) :
 			`${ Lng.noConnect[lang] }: \n${ getErrorMessage(err) }`);
 	} else {
-		$popup('newposts', `${ Lng.thrNotFound[lang] } (№${ aib.t }): \n${ getErrorMessage(err) }`);
+		$popupText('newposts', `${ Lng.thrNotFound[lang] } (№${ aib.t }): \n${ getErrorMessage(err) }`);
 		if(showError) {
 			doc.title = `{${ eCode }} ${ doc.title }`;
 		}
@@ -7281,7 +7288,7 @@ const Pages = {
 			return CancelablePromise.reject(new CancelError());
 		}).then(() => this._endAdding()).catch(err => {
 			if(!(err instanceof CancelError)) {
-				$popup('add-page', getErrorMessage(err));
+				$popupText('add-page', getErrorMessage(err));
 				this._endAdding();
 			}
 		});
@@ -7331,7 +7338,7 @@ const Pages = {
 			try {
 				this._addForm(await ajaxLoad(aib.getPageUrl(aib.b, i)), i);
 			} catch(err) {
-				$popup('load-pages', getErrorMessage(err));
+				$popupText('load-pages', getErrorMessage(err));
 			}
 		}
 		const { first } = DelForm;
@@ -9422,7 +9429,7 @@ function showSubmitError(error) {
 	if(/[cf]aptch|капч|подтвер|verifi/i.test(error)) {
 		postform.refreshCaptchaTNum(true);
 	}
-	$popup('upload', error.toString());
+	$popupText('upload', error.toString());
 	updater.sendErrNotif();
 	updater.continueUpdater();
 	DollchanAPI.notify('submitform', { success: false, error });
@@ -9507,7 +9514,7 @@ async function checkSubmit(data) {
 async function checkDelete(data) {
 	const err = getSubmitError(data instanceof Document ? data : $createDoc(data));
 	if(err) {
-		$popup('delete', Lng.errDelete[lang] + ':\n' + err);
+		$popupText('delete', Lng.errDelete[lang] + ':\n' + err);
 		updater.sendErrNotif();
 		return;
 	}
@@ -10385,8 +10392,11 @@ class Captcha {
 			$show(this.parentEl);
 		} else if(this._isRecap) {
 			const el = $q('#g-recaptcha, .g-recaptcha');
-			el.insertAdjacentHTML('afterend', `<div id="g-recaptcha" class="g-recaptcha" data-sitekey="${
-				el.getAttribute('data-sitekey') }"></div>`);
+			const replacement = doc.createElement('div');
+			replacement.id = 'g-recaptcha';
+			replacement.className = 'g-recaptcha';
+			replacement.setAttribute('data-sitekey', el.getAttribute('data-sitekey') || '');
+			el.after(replacement);
 			el.remove();
 		} else {
 			this.parentEl.innerHTML = this.originHTML;
@@ -10559,6 +10569,22 @@ class Captcha {
 /* ==[ Posts.js ]=============================================================================================
                                                     POSTS
 =========================================================================================================== */
+
+// Read an existing DOM tree without treating its text as markup.
+function extractPostText(node) {
+	if(node.nodeType === 3) {
+		return node.nodeValue;
+	}
+	if(node.nodeType !== 1) {
+		return '';
+	}
+	const tag = node.tagName.toLowerCase();
+	if(tag === 'br') {
+		return '\n';
+	}
+	const text = Array.from(node.childNodes, extractPostText).join('');
+	return tag === 'p' || tag === 'li' ? '\n' + text + '\n' : text;
+}
 
 class AbstractPost {
 	constructor(thr, num, isOp) {
@@ -11501,12 +11527,7 @@ Post.Content = class PostContent extends TemporaryContent {
 		return value;
 	}
 	get text() {
-		const value = this.post.msg.innerHTML
-			.replace(/<\/?(?:br|p|li)[^>]*?>/gi, '\n')
-			.replace(/<[^>]+?>/g, '')
-			.replaceAll('&gt;', '>')
-			.replaceAll('&lt;', '<')
-			.replaceAll('&nbsp;', '\u00A0').trim();
+		const value = extractPostText(this.post.msg).trim();
 		Object.defineProperty(this, 'text', { value });
 		return value;
 	}
@@ -11920,7 +11941,7 @@ class Pview extends AbstractPost {
 	}
 	_onerror(err) {
 		if(!(err instanceof CancelError)) {
-			this.el.innerHTML = (err instanceof AjaxError) && err.code === 404 ?
+			this.el.textContent = (err instanceof AjaxError) && err.code === 404 ?
 				Lng.postNotFound[lang] : getErrorMessage(err);
 		}
 	}
@@ -13371,8 +13392,8 @@ class _4chanPostsBuilder {
 		this._colorIDs = [];
 	}
 	static fixFileName(name, maxLength) {
-		const decodedName = name.replaceAll('&amp;', '&').replaceAll('&quot;', '"').replaceAll('&#039;', '\'')
-			.replaceAll('&lt;', '<').replaceAll('&gt;', '>');
+		const entities = { '&amp;': '&', '&quot;': '"', '&#039;': "'", '&lt;': '<', '&gt;': '>' };
+		const decodedName = name.replace(/&(?:amp|quot|#039|lt|gt);/g, entity => entities[entity]);
 		return decodedName.length <= maxLength ? { isFixed: false, name } : {
 			isFixed: true,
 			name   : decodedName.slice(0, 25).replaceAll('&', '&amp;').replaceAll('"', '&quot;')
@@ -14080,7 +14101,7 @@ class Thread {
 		}
 		return ajaxPostsLoad(aib.b, this.num, false).then(
 			pBuilder => this._loadFromBuilder(task, isSmartScroll, pBuilder),
-			err => $popup('load-thr', getErrorMessage(err)));
+			err => $popupText('load-thr', getErrorMessage(err)));
 	}
 	/*
 	* New posts loading via ajax.
@@ -15138,7 +15159,7 @@ function initThreadUpdater(title, enableUpdate) {
 			if(enabled && paused) {
 				return;
 			}
-			$popup('newposts', Lng.loading[lang], true);
+			$popupText('newposts', Lng.loading[lang], true);
 			forceLoadPosts();
 		},
 		pauseUpdater() {
@@ -15308,7 +15329,7 @@ class DelForm {
 					postform.closeReply();
 					$popup('delete', Lng.deleting[lang], true);
 					html5Submit(el, e.target).then(checkDelete)
-						.catch(err => $popup('delete', getErrorMessage(err)));
+						.catch(err => $popupText('delete', getErrorMessage(err)));
 				};
 			}
 			Logger.log('Init AJAX');
@@ -16529,7 +16550,7 @@ function getImageBoard(checkDomains, checkEngines) {
 					try {
 						obj = JSON.parse(xhr.responseText);
 					} catch(err) {}
-					$popup('report', obj.result === 1 ? Lng.succReported[lang] :
+					$popupText('report', obj.result === 1 ? Lng.succReported[lang] :
 						Lng.error[lang] + ': ' + obj.error.message);
 				});
 			});
@@ -16609,7 +16630,7 @@ function getImageBoard(checkDomains, checkEngines) {
 				$ajax(`/api/${ task }?board=${ this.b }&num=${ num }`).then(xhr => {
 					const obj = JSON.parse(xhr.responseText);
 					if(obj.result !== 1) {
-						$popup('err-2chlike', Lng.error[lang] + ': ' + obj.error.message);
+						$popupText('err-2chlike', Lng.error[lang] + ': ' + obj.error.message);
 						return;
 					}
 					likeEl.classList.add(`post__rate_${ task }d`);
@@ -17353,13 +17374,13 @@ function getImageBoard(checkDomains, checkEngines) {
 						try {
 							obj = JSON.parse(xhr.responseText);
 						} catch(err) {
-							$popup('report', Lng.reportError[lang] + ':<br>' + xhr.responseText);
+							$popupText('report', Lng.reportError[lang] + ':\n' + xhr.responseText);
 							return;
 						}
-						$popup('report', obj.result === 'ok' ? Lng.succReported[lang] :
+						$popupText('report', obj.result === 'ok' ? Lng.succReported[lang] :
 							obj.result === 'alreadysent' ? Lng.alreadyReported[lang] :
 							Lng.reportError[lang] +
-								(obj.result === 'error' && obj.message ? ':<br>' + obj.message : ''));
+								(obj.result === 'error' && obj.message ? ':\n' + obj.message : ''));
 					});
 				};
 			};
@@ -17666,9 +17687,10 @@ function getImageBoard(checkDomains, checkEngines) {
 			return $q('.sage', post).hasChildNodes();
 		}
 		init() {
-			if(!this.host.includes('nocsp.') && this.host.includes('kohlchan.net')) {
-				deWindow.location.assign(deWindow.location.href
-					.replace(/(www\.)?kohlchan\.net/, 'nocsp.kohlchan.net'));
+			if(this.host === 'kohlchan.net' || this.host === 'www.kohlchan.net') {
+				const target = new URL(deWindow.location.href);
+				target.hostname = 'nocsp.kohlchan.net';
+				deWindow.location.assign(target.href);
 				return true;
 			}
 			if(locStorage.autoRefreshMode !== 'false' || locStorage.convertLocalTimes !== 'false') {
