@@ -1890,6 +1890,14 @@ function strToRegExp(str, notGlobal) {
 	return new RegExp(str.substr(1, l - 1), notGlobal ? flags.replace('g', '') : flags);
 }
 
+// Preserve the board-compatible eight-character base32 format using only Web Crypto.
+function generatePostPassword() {
+	const bytes = new Uint8Array(8);
+	crypto.getRandomValues(bytes);
+	// 32 divides 256, so each low-five-bit character has equal probability.
+	return Array.from(bytes, byte => (byte & 31).toString(32)).join('');
+}
+
 // Normalizes post text for persistent exact/fuzzy hiding rules.
 function normalizePostText(text, fuzzy = false) {
 	let value = String(text).toLowerCase().replace(/ё/g, 'е');
@@ -2725,7 +2733,7 @@ async function readCfg() {
 		Cfg.sageReply = 0;
 	}
 	if(!Cfg.passwValue) {
-		Cfg.passwValue = Math.round(Math.random() * 1e12).toString(32);
+		Cfg.passwValue = generatePostPassword();
 	}
 	if(!Cfg.stats) {
 		Cfg.stats = { view: 0, op: 0, reply: 0 };
@@ -4828,7 +4836,7 @@ const CfgWindow = {
 		if(type === 'click' && tag === 'input' && el.type === 'button') {
 			switch(el.id) {
 			case 'de-cfg-button-pass':
-				$q('input[info="passwValue"]').value = Math.round(Math.random() * 1e12).toString(32);
+				$q('input[info="passwValue"]').value = generatePostPassword();
 				await PostForm.setUserPassw();
 				break;
 			case 'de-cfg-button-keys':

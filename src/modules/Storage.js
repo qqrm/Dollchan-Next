@@ -214,7 +214,7 @@ async function readCfg() {
 		Cfg.sageReply = 0;
 	}
 	if(!Cfg.passwValue) {
-		Cfg.passwValue = Math.round(Math.random() * 1e12).toString(32);
+		Cfg.passwValue = generatePostPassword();
 	}
 	if(!Cfg.stats) {
 		Cfg.stats = { view: 0, op: 0, reply: 0 };

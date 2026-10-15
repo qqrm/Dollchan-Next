@@ -1,3 +1,11 @@
+// Preserve the board-compatible eight-character base32 format using only Web Crypto.
+function generatePostPassword() {
+	const bytes = new Uint8Array(8);
+	crypto.getRandomValues(bytes);
+	// 32 divides 256, so each low-five-bit character has equal probability.
+	return Array.from(bytes, byte => (byte & 31).toString(32)).join('');
+}
+
 // Read an existing DOM tree without treating its text as markup.
 function extractPostText(node) {
 	if(node.nodeType === 3) {
@@ -183,6 +191,7 @@ function generateImageHash([arrBuf, oldw, oldh]) {
 // Node tests import the same standalone functions embedded by the Firefox build.
 if(typeof module !== 'undefined' && module.exports) {
 	module.exports = {
+		generatePostPassword,
 		extractPostText,
 		normalizePostText,
 		getTextSimilarity,
