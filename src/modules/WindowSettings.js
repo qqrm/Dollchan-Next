@@ -401,7 +401,7 @@ const CfgWindow = {
 		if(type === 'click' && tag === 'input' && el.type === 'button') {
 			switch(el.id) {
 			case 'de-cfg-button-pass':
-				$q('input[info="passwValue"]').value = Math.round(Math.random() * 1e12).toString(32);
+				$q('input[info="passwValue"]').value = generatePostPassword();
 				await PostForm.setUserPassw();
 				break;
 			case 'de-cfg-button-keys':
